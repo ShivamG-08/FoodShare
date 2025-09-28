@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const authRoutes = require("./routes/auth");
+const profileRoutes = require("./routes/profile");
 const { spawn } = require("child_process");
 const path = require("path");
 
@@ -12,6 +13,7 @@ app.use(cors());
 
 // ✅ Use auth routes
 app.use("/auth", authRoutes);
+app.use("/profile", profileRoutes);
 
 // ✅ Prediction Route (Donor Dashboard will call this)
 app.post("/predict", (req, res) => {
