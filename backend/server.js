@@ -17,22 +17,33 @@ app.use("/auth", authRoutes);
 app.post("/predict", (req, res) => {
   const data = JSON.stringify(req.body);
 
+  // Spawn python to run the AI model script
   const pythonProcess = spawn("python", [
     path.join(__dirname, "../ai-model/predict.py"),
     data,
   ]);
 
   let result = "";
+  let errBuf = "";
   pythonProcess.stdout.on("data", (chunk) => {
     result += chunk.toString();
   });
 
   pythonProcess.stderr.on("data", (err) => {
-    console.error("Python error:", err.toString());
+    const msg = err.toString();
+    errBuf += msg;
+    console.error("Python error:", msg);
   });
 
-  pythonProcess.on("close", () => {
-    res.json({ prediction: result.trim() });
+  pythonProcess.on("close", (code) => {
+    const trimmed = result.trim();
+    if (code !== 0) {
+      return res.status(500).json({ error: "Prediction process exited with error", details: errBuf || trimmed });
+    }
+    if (!trimmed) {
+      return res.status(500).json({ error: "Empty prediction response from model", details: errBuf });
+    }
+    res.json({ prediction: trimmed });
   });
 });
 
