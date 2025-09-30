@@ -1,105 +1,121 @@
 # FoodShare
 
-A platform connecting food donors with those in need, reducing food waste and fighting hunger in local communities.
+A platform connecting food donors with receivers to reduce food waste and help those in need. The application includes AI-powered food freshness prediction to ensure food quality.
 
 ## Project Structure
 
 ```
 FoodShare/
-│
-├── ai-model/                     # AI model for food freshness prediction
+├── ai-model/                     # AI Model for food freshness prediction
+│   ├── train_model.py           # Script to train the food freshness model
+│   ├── predict.py               # Script to make predictions using the trained model
 │   ├── food_freshness_model.pkl  # Trained model file
-│   ├── label_encoder.pkl         # Label encoder for model predictions
-│   ├── metadata.csv.xlsx         # Dataset metadata
-│   └── predict.py               # Prediction script
+│   ├── label_encoder.pkl        # Label encoder for model predictions
+│   └── expanded_food_dataset.csv # Dataset used for training
 │
-├── backend/                      # Backend server
+├── backend/                     # Backend server (Node.js/Express)
 │   ├── models/
-│   │   └── User.js              # User model definition
+│   │   └── User.js             # User model and schema
 │   ├── routes/
-│   │   └── auth.js              # Authentication routes
-│   ├── node_modules/             # Dependencies
-│   ├── package-lock.json        # NPM lock file
-│   └── server.js                # Main server file
+│   │   └── auth.js             # Authentication routes
+│   ├── server.js                # Main server file
+│   ├── package.json             # Backend dependencies
+│   └── package-lock.json
 │
-└── frontend/                     # React frontend
-    ├── public/                  # Static files
-    │   ├── index.html
-    │   ├── favicon.ico
-    │   └── ...
-    ├── src/
-    │   ├── pages/               # React components
-    │   │   ├── Login.js         # Login page
-    │   │   ├── ReceiverDashboard.js  # Dashboard for food receivers
-    │   │   └── ...
-    │   ├── App.js               # Main App component
-    │   ├── App.css
-    │   └── ...
-    ├── package.json
-    └── ...
+├── frontend/                    # Frontend application (React)
+│   ├── public/
+│   │   ├── index.html          # Main HTML file
+│   │   ├── favicon.ico         # Website icon
+│   │   ├── logo192.png         # App logo (192x192)
+│   │   ├── logo512.png         # App logo (512x512)
+│   │   ├── manifest.json       # Web app manifest
+│   │   └── robots.txt          # Instructions for web crawlers
+│   │
+│   ├── src/
+│   │   ├── pages/              # React components for different pages
+│   │   │   ├── DonorDashboard.js    # Donor interface
+│   │   │   ├── DonorDashboard.css
+│   │   │   ├── ReceiverDashboard.js # Receiver interface
+│   │   │   ├── ReceiverDashboard.css
+│   │   │   ├── Login.js             # Login page
+│   │   │   ├── Login.css
+│   │   │   ├── Signup.js            # Registration page
+│   │   │   ├── Signup.css
+│   │   │   └── Prediction.js        # Food prediction interface
+│   │   │
+│   │   ├── App.js              # Main App component
+│   │   ├── App.css             # Global styles
+│   │   ├── App.test.js         # Test file for App component
+│   │   ├── index.js            # Application entry point
+│   │   ├── index.css           # Global styles
+│   │   ├── logo.svg            # React logo
+│   │   ├── reportWebVitals.js  # Performance monitoring
+│   │   └── setupTests.js       # Test setup configuration
+│   │
+│   ├── package.json            # Frontend dependencies
+│   └── package-lock.json
+│
+├── .gitignore                  # Specifies intentionally untracked files to ignore
+└── requirements.txt            # Python dependencies for the AI model
 ```
 
 ## Features
 
-- User authentication (Donor/Receiver)
-- Food donation listing and management
-- Food freshness prediction using AI
-- Real-time notifications
-- Location-based food availability
+- **User Authentication**: Secure login and registration system for donors and receivers
+- **AI-Powered Prediction**: Predicts food freshness using machine learning
+- **Donor Dashboard**: Interface for food donors to list available food items
+- **Receiver Dashboard**: Interface for receivers to browse and request available food
+- **Responsive Design**: Works on both desktop and mobile devices
 
-## Tech Stack
+## Prerequisites
 
-- **Frontend**: React.js
-- **Backend**: Node.js, Express.js
-- **Database**: MongoDB (Mongoose ODM)
-- **AI/ML**: Python, scikit-learn
-- **Authentication**: JWT (JSON Web Tokens)
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v14 or later)
-- Python 3.7+
-- MongoDB
+- Node.js (v14 or higher)
+- Python (v3.7 or higher)
 - npm or yarn
+- MongoDB (for the database)
 
-### Installation
+## Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/FoodShare.git
+   git clone <repository-url>
    cd FoodShare
    ```
 
-2. **Setup Backend**
+2. **Set up the backend**
    ```bash
    cd backend
    npm install
-   cp .env.example .env
-   # Update .env with your configuration
    ```
 
-3. **Setup Frontend**
+3. **Set up the frontend**
    ```bash
    cd ../frontend
    npm install
-   cp .env.example .env
-   # Update .env with your API endpoints
    ```
 
-4. **Setup AI Model**
+4. **Set up the AI model**
    ```bash
    cd ../ai-model
-   pip install -r requirements.txt
+   pip install -r ../requirements.txt
    ```
 
-### Running the Application
+## Running the Application
 
-1. Start MongoDB service
-2. In the backend directory: `npm start`
-3. In the frontend directory: `npm start`
-4. The application should be running at `http://localhost:3000`
+1. **Start the backend server**
+   ```bash
+   cd backend
+   node server.js
+   ```
+
+2. **Start the frontend development server**
+   ```bash
+   cd ../frontend
+   npm start
+   ```
+
+3. **Access the application**
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Contributing
 
@@ -113,7 +129,9 @@ FoodShare/
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contact
+## Acknowledgments
 
-Your Name - your.email@example.com
-Project Link: [https://github.com/yourusername/FoodShare](https://github.com/yourusername/FoodShare)
+- [React](https://reactjs.org/) - Frontend library
+- [Node.js](https://nodejs.org/) - JavaScript runtime
+- [Express](https://expressjs.com/) - Web framework for Node.js
+- [MongoDB](https://www.mongodb.com/) - NoSQL database
