@@ -11,6 +11,9 @@ import {
   FaBell,
   FaSignOutAlt,
   FaMapMarkedAlt,
+  FaCheckCircle,
+  FaExclamationTriangle,
+  FaInfoCircle,
 } from "react-icons/fa";
 import "./DonorDashboard.css";
 import { predictFreshness } from "../services/predictionApi";
@@ -32,6 +35,14 @@ const DonorDashboard = () => {
   const [quantity, setQuantity] = useState("");
   const [location, setLocation] = useState("");
   const [notes, setNotes] = useState("");
+  const [foodType, setFoodType] = useState("cooked");
+  const [cookedHours, setCookedHours] = useState("");
+  const [storageTemp, setStorageTemp] = useState("");
+  const [reheated, setReheated] = useState(false);
+  const [safetyCheck, setSafetyCheck] = useState(null);
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
+  const [checkingSafety, setCheckingSafety] = useState(false);
+  const [safetyError, setSafetyError] = useState("");
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
@@ -88,50 +99,55 @@ const DonorDashboard = () => {
     }
   };
 
-  // Prefetch notifications when dashboard mounts (only for donors)
   useEffect(() => {
     const prefetch = async () => {
       try {
-        setNotifError("");
-        if (!isDonor) return;
-        const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
-        if (!userId) return;
-        const list = await getNotifications(userId);
-        setNotifications(Array.isArray(list) ? list : []);
-      } catch (e) {
-        console.error("Prefetch notifications error", e);
-        setNotifError("Failed to load notifications");
+        if (isDonor) {
+          const data = await getDonationsByUser(uid);
+          setDonations(Array.isArray(data) ? data : []);
+
+          const notifications = await getNotifications(uid);
+          setNotifications(Array.isArray(notifications) ? notifications : []);
+        }
+      } catch (error) {
+        console.error("Error prefetching data:", error);
       }
     };
+    
     prefetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [uid, isDonor]);
 
-  // Fire one dummy prediction on mount without affecting UI
   useEffect(() => {
-    const dummy = {
-      food_type: "fruit",
-      food_name: "Apple",
-      cuisine: "universal",
-      time_since_cooked_hours: 2,
-      storage_temp_c: 4,
-      humidity: 0.5,
-      packaging: "none",
-      previous_reheats: 0,
-      ph_level: 7.0,
-      smell_score: 6,
+    const warmupPrediction = async () => {
+      try {
+        if (isDonor) {
+          // This is just to warm up the model, we don't need the result
+          await predictFreshnessForFood({
+            foodType: "cooked",
+            foodName: "Pizza",
+            cookedHours: 2,
+            temperatureStore: 4,
+            reheated: false
+          });
+        }
+      } catch (error) {
+        console.warn("Model warmup failed:", error);
+      }
     };
-    predictFreshnessForFood(dummy);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    
+    warmupPrediction();
+  }, [isDonor]);
 
-  // Load donation history when history tab is opened
   useEffect(() => {
     const loadHistory = async () => {
+      if (!isDonor || activeTab !== "history") return;
+      
       const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
       if (!userId) return;
+      
       setHistoryError("");
       setHistoryLoading(true);
+      
       try {
         const data = await getDonationsByUser(userId);
         setDonations(Array.isArray(data) ? data : []);
@@ -142,36 +158,109 @@ const DonorDashboard = () => {
         setHistoryLoading(false);
       }
     };
-    if (activeTab === "history") {
-      loadHistory();
+    
+    loadHistory();
+  }, [activeTab, isDonor]);
+
+  const checkFoodSafety = async () => {
+    if (!food || !cookedHours || !storageTemp) {
+      setSafetyError('Please fill in all required fields');
+      return;
     }
-  }, [activeTab]);
+
+    setCheckingSafety(true);
+    setSafetyError('');
+    setSafetyCheck(null);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/prediction/check-safety', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          foodType,
+          foodName: food,
+          cookedHours: parseFloat(cookedHours),
+          temperatureStore: parseFloat(storageTemp),
+          reheated
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to check food safety');
+      }
+
+      const result = await response.json();
+      
+      setSafetyCheck({
+        status: result.status,
+        confidence: result.confidence,
+        message: result.message || `Food safety check: ${result.status}`
+      });
+      
+      setShowSafetyModal(true);
+    } catch (error) {
+      console.error("Error checking food safety:", error);
+      setSafetyError(error.message || "Failed to check food safety. Please try again.");
+    } finally {
+      setCheckingSafety(false);
+    }
+  };
 
   const handleSubmitDonation = async (e) => {
     e.preventDefault();
     setSubmitError("");
     setSubmitSuccess("");
+    
+    if (!safetyCheck || safetyCheck.status === 'not_ok') {
+      setSubmitError("Please check food safety and ensure it's safe to donate.");
+      return;
+    }
+    
     const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
     if (!userId) {
       setSubmitError("You must be logged in to donate.");
       return;
     }
+    
     if (!food || !quantity || !location) {
       setSubmitError("Please fill all required fields.");
       return;
     }
+    
     setSubmitLoading(true);
     try {
-      const payload = { userId, food, quantity, location, notes };
+      const payload = { 
+        userId, 
+        food, 
+        quantity, 
+        location, 
+        notes,
+        foodType,
+        cookedHours: parseFloat(cookedHours),
+        storageTemp: parseFloat(storageTemp),
+        reheated,
+        safetyStatus: safetyCheck.status
+      };
+      
       await createDonation(payload);
-      setSubmitSuccess("Donation submitted.");
+      setSubmitSuccess("Donation submitted successfully!");
+      
+      // Reset form
       setFood("");
       setQuantity("");
       setLocation("");
       setNotes("");
+      setCookedHours("");
+      setStorageTemp("");
+      setReheated(false);
+      setSafetyCheck(null);
     } catch (e) {
-      setSubmitError("Failed to submit donation.");
-      console.error(e);
+      console.error("Donation submission error:", e);
+      setSubmitError("Failed to submit donation. Please try again.");
     } finally {
       setSubmitLoading(false);
     }
@@ -241,25 +330,228 @@ const DonorDashboard = () => {
               {submitSuccess && <div className="success">{submitSuccess}</div>}
               <form onSubmit={handleSubmitDonation} className="form-grid">
                 <div className="form-row">
-                  <label>Food *</label>
-                  <input value={food} onChange={(e) => setFood(e.target.value)} placeholder="e.g., Rice & Curry" />
+                  <label>Food Name *</label>
+                  <input 
+                    value={food} 
+                    onChange={(e) => setFood(e.target.value)} 
+                    placeholder="e.g., Pasta, Rice, etc." 
+                  />
                 </div>
+                
+                <div className="form-row">
+                  <label>Food Type *</label>
+                  <select 
+                    value={foodType} 
+                    onChange={(e) => setFoodType(e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="cooked">Cooked Food</option>
+                    <option value="raw">Raw Ingredients</option>
+                  </select>
+                </div>
+                
+                <div className="form-row">
+                  <label>
+                    {foodType === 'cooked' 
+                      ? 'Hours since cooked *' 
+                      : 'Hours since prepared *'}
+                  </label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    step="0.5"
+                    value={cookedHours}
+                    onChange={(e) => setCookedHours(e.target.value)}
+                    placeholder="e.g., 2.5"
+                  />
+                </div>
+                
+                <div className="form-row">
+                  <label>Storage Temperature (°C) *</label>
+                  <input 
+                    type="number"
+                    value={storageTemp}
+                    onChange={(e) => setStorageTemp(e.target.value)}
+                    placeholder="e.g., 4 (refrigerated)"
+                  />
+                </div>
+                
+                <div className="form-row checkbox-row">
+                  <label>
+                    <input 
+                      type="checkbox" 
+                      checked={reheated}
+                      onChange={(e) => setReheated(e.target.checked)}
+                    />
+                    <span>This food has been reheated</span>
+                  </label>
+                </div>
+                
                 <div className="form-row">
                   <label>Quantity *</label>
-                  <input value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="e.g., 3 plates / 2 kg" />
+                  <input 
+                    value={quantity} 
+                    onChange={(e) => setQuantity(e.target.value)} 
+                    placeholder="e.g., 3 plates / 2 kg" 
+                  />
                 </div>
+                
                 <div className="form-row">
-                  <label>Location *</label>
-                  <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Andheri West, Mumbai" />
+                  <label>Pickup Location *</label>
+                  <input 
+                    value={location} 
+                    onChange={(e) => setLocation(e.target.value)} 
+                    placeholder="e.g., Andheri West, Mumbai" 
+                  />
                 </div>
+                
                 <div className="form-row">
-                  <label>Notes</label>
-                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes (packaging, pickup window, etc.)" />
+                  <label>Additional Notes</label>
+                  <textarea 
+                    value={notes} 
+                    onChange={(e) => setNotes(e.target.value)} 
+                    placeholder="Special instructions, ingredients, etc." 
+                  />
                 </div>
-                <button type="submit" disabled={submitLoading} className="btn btn-primary">
-                  {submitLoading ? "Submitting..." : "Submit Donation"}
-                </button>
+                
+                <div className="form-actions">
+                  <button 
+                    type="button" 
+                    onClick={checkFoodSafety}
+                    disabled={!food || !cookedHours || !storageTemp || checkingSafety}
+                    className="btn btn-secondary"
+                  >
+                    {checkingSafety ? 'Checking...' : 'Check Food Safety'}
+                  </button>
+                  
+                  <button 
+                    type="submit" 
+                    disabled={submitLoading || !safetyCheck || safetyCheck.status === 'not_ok'}
+                    className="btn btn-primary"
+                  >
+                    {submitLoading ? 'Submitting...' : 'Submit Donation'}
+                  </button>
+                </div>
+                
+                {safetyError && <div className="error">{safetyError}</div>}
+                
+                {safetyCheck && (
+                  <div className={`safety-status ${safetyCheck.status}`}>
+                    {safetyCheck.status === 'ok' && (
+                      <p className="text-success">
+                        <FaCheckCircle /> This food is safe to donate!
+                      </p>
+                    )}
+                    {safetyCheck.status === 'borderline' && (
+                      <p className="text-warning">
+                        <FaExclamationTriangle /> This food is borderline. Please check carefully.
+                      </p>
+                    )}
+                    {safetyCheck.status === 'not_ok' && (
+                      <p className="text-danger">
+                        <FaInfoCircle /> This food is not safe to donate.
+                      </p>
+                    )}
+                  </div>
+                )}
               </form>
+              
+              {/* Safety Check Modal */}
+              {showSafetyModal && safetyCheck && (
+                <div className="modal-overlay">
+                  <div className="modal">
+                    <div className="modal-header">
+                      <h3>Food Safety Check Results</h3>
+                      <button 
+                        className="close-btn"
+                        onClick={() => setShowSafetyModal(false)}
+                      >
+                        &times;
+                      </button>
+                    </div>
+                    <div className="modal-body">
+                      <div className={`safety-result ${safetyCheck.status}`}>
+                        {safetyCheck.status === 'ok' && (
+                          <>
+                            <FaCheckCircle className="result-icon" />
+                            <h4>Safe to Donate</h4>
+                            <p>This food meets all safety requirements for donation.</p>
+                          </>
+                        )}
+                        {safetyCheck.status === 'borderline' && (
+                          <>
+                            <FaExclamationTriangle className="result-icon" />
+                            <h4>Use Caution</h4>
+                            <p>This food is at the edge of safety limits. Please consider the following:</p>
+                            <ul>
+                              <li>Check for any unusual odors or discoloration</li>
+                              <li>Ensure proper storage temperature was maintained</li>
+                              <li>Consider discarding if unsure about safety</li>
+                            </ul>
+                          </>
+                        )}
+                        {safetyCheck.status === 'not_ok' && (
+                          <>
+                            <FaInfoCircle className="result-icon" />
+                            <h4>Not Safe to Donate</h4>
+                            <p>This food does not meet safety standards for donation due to:</p>
+                            <ul>
+                              <li>Potential bacterial growth risk</li>
+                              <li>Improper storage conditions</li>
+                              <li>Exceeded safe time limits</li>
+                            </ul>
+                          </>
+                        )}
+                        
+                        <div className="confidence-levels">
+                          <h5>Confidence Levels:</h5>
+                          <div className="progress-container">
+                            <div className="progress-label">Safe</div>
+                            <div className="progress">
+                              <div 
+                                className="progress-bar bg-success" 
+                                style={{ width: `${safetyCheck.confidence.ok * 100}%` }}
+                              >
+                                {Math.round(safetyCheck.confidence.ok * 100)}%
+                              </div>
+                            </div>
+                          </div>
+                          <div className="progress-container">
+                            <div className="progress-label">Borderline</div>
+                            <div className="progress">
+                              <div 
+                                className="progress-bar bg-warning" 
+                                style={{ width: `${safetyCheck.confidence.borderline * 100}%` }}
+                              >
+                                {Math.round(safetyCheck.confidence.borderline * 100)}%
+                              </div>
+                            </div>
+                          </div>
+                          <div className="progress-container">
+                            <div className="progress-label">Not Safe</div>
+                            <div className="progress">
+                              <div 
+                                className="progress-bar bg-danger" 
+                                style={{ width: `${safetyCheck.confidence.not_ok * 100}%` }}
+                              >
+                                {Math.round(safetyCheck.confidence.not_ok * 100)}%
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="modal-footer">
+                      <button 
+                        className="btn btn-primary"
+                        onClick={() => setShowSafetyModal(false)}
+                      >
+                        {safetyCheck.status === 'not_ok' ? 'I Understand' : 'Continue'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
