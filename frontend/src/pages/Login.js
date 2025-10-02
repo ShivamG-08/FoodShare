@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import "./Login.css";
 
 function Login() {
@@ -8,6 +8,9 @@ function Login() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const requiredRole = params.get("role"); // 'receiver' | 'donor' | null
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,7 +29,20 @@ function Login() {
       );
 
       if (response.data && response.data.role) {
+        // Enforce role if specified via query param BEFORE storing anything
+        if (requiredRole && response.data.role !== requiredRole) {
+          setError("Invalid credentials");
+          return; // Do not store or navigate
+        }
+
+        // Store after role check passes
         localStorage.setItem("userRole", response.data.role);
+        if (response.data.user) {
+          localStorage.setItem("userId", response.data.user.id);
+          localStorage.setItem("userEmail", response.data.user.email);
+          localStorage.setItem("userName", response.data.user.name || "");
+        }
+
         if (response.data.role === "donor") {
           navigate("/donor-dashboard");
         } else {
@@ -43,7 +59,13 @@ function Login() {
 
   return (
     <div className="login-container">
-      <h2>Login</h2>
+      <h2>
+        {requiredRole === "receiver"
+          ? "Receiver Login"
+          : requiredRole === "donor"
+          ? "Donor Login"
+          : "Login"}
+      </h2>
 
       {error && <div className="error-box">{error}</div>}
 

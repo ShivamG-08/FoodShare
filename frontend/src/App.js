@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Routes, Route, Link, Navigate } from "react-router-dom";
+import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom";
 import "./style.css";
 import Login from "./pages/Login";
 import ReceiverDashboard from "./pages/ReceiverDashboard";
@@ -13,6 +13,17 @@ function Landing() {
     // Load DOM-manipulating script after mount to avoid null refs
     import("./script.js").catch(() => {});
   }, []);
+
+  const navigate = useNavigate();
+  const handleDonateNow = () => {
+    const role = typeof window !== 'undefined' ? localStorage.getItem('userRole') : null;
+    const uid = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    if (role === 'donor' && uid) {
+      navigate('/donor-dashboard');
+    } else {
+      navigate('/login?role=donor');
+    }
+  };
 
   return (
     <>
@@ -31,8 +42,8 @@ function Landing() {
             <li><a href="#contact">Contact</a></li>
             <li><Link to="/login" className="btn btn-secondary">Login</Link></li>
             <li><Link to="/admin-login" className="btn btn-secondary">Admin</Link></li>
-            <li><Link to="/login" className="btn btn-secondary">Receiver</Link></li>
-            <li><Link to="/login" className="btn btn-primary">Donate</Link></li>
+            <li><button onClick={handleDonateNow} className="btn btn-secondary">Donar</button></li>
+            <li><Link to="/login?role=receiver" className="btn btn-secondary">Receiver</Link></li>
           </ul>
         </div>
       </nav>
@@ -49,7 +60,7 @@ function Landing() {
           <h1>No One Should Go Hungry</h1>
           <p>Your donation helps feed families and fight food waste. Together, we can end hunger.</p>
           <div className="hero-buttons">
-            <Link to="/signup" className="btn btn-primary">Register</Link>
+            <Link to="/signup" className="btn btn-secondary">Register</Link>
             <Link to="/login" className="btn btn-secondary">Login</Link>
           </div>
         </div>
@@ -161,7 +172,7 @@ function Landing() {
         <div className="container donate-box">
           <h2 className="section-title">Support Our Mission</h2>
           <p>Every contribution helps us serve more meals and reach more families. Thank you for your generosity.</p>
-          <Link to="/login" className="btn btn-primary">Make a Donation</Link>
+          <Link to="/login?role=donor" className="btn btn-secondary">Make a Donation</Link>
         </div>
       </section>
 
@@ -197,6 +208,11 @@ function Landing() {
 }
 
 function App() {
+  const RequireRole = ({ role, children }) => {
+    const current = typeof window !== 'undefined' ? localStorage.getItem('userRole') : null;
+    if (!current || current !== role) return <Navigate to="/login" replace />;
+    return children;
+  };
   const RequireAdmin = ({ children }) => {
     const isAdmin = typeof window !== 'undefined' && localStorage.getItem('isAdmin') === 'true';
     return isAdmin ? children : <Navigate to="/admin-login" replace />;
@@ -215,8 +231,22 @@ function App() {
           </RequireAdmin>
         }
       />
-      <Route path="/receiver-dashboard" element={<ReceiverDashboard />} />
-      <Route path="/donor-dashboard" element={<DonorDashboard />} />
+      <Route
+        path="/receiver-dashboard"
+        element={
+          <RequireRole role="receiver">
+            <ReceiverDashboard />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/donor-dashboard"
+        element={
+          <RequireRole role="donor">
+            <DonorDashboard />
+          </RequireRole>
+        }
+      />
     </Routes>
   );
 }

@@ -15,11 +15,37 @@ import {
 import "./DonorDashboard.css";
 import { predictFreshness } from "../services/predictionApi";
 import MapSection from "../components/MapSection";
+import { createDonation, getDonationsByUser } from "../services/donationApi";
+import { getNotifications, markNotificationRead } from "../services/notificationApi";
 
 const DonorDashboard = () => {
   const [activeTab, setActiveTab] = useState("currentDonations");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
+  // Determine donor login state
+  const role = typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+  const uid = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+  const isDonor = role === "donor" && !!uid;
+
+  // Donation form state
+  const [food, setFood] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [location, setLocation] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitSuccess, setSubmitSuccess] = useState("");
+
+  // Notifications state
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [notifError, setNotifError] = useState("");
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Donation history state
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const [donations, setDonations] = useState([]);
 
   // Non-UI helper to call AI model; safe to use anywhere in dashboard logic
   // Usage example (do not change UI):
@@ -34,6 +60,52 @@ const DonorDashboard = () => {
       return null;
     }
   };
+
+  const toggleNotifications = async () => {
+    try {
+      setNotifError("");
+      const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+      if (!userId) return;
+      // Always refresh on open
+      if (!showNotifications) {
+        const list = await getNotifications(userId);
+        setNotifications(Array.isArray(list) ? list : []);
+      }
+    } catch (e) {
+      console.error("Load notifications error", e);
+      setNotifError("Failed to load notifications");
+    } finally {
+      setShowNotifications(!showNotifications);
+    }
+  };
+
+  const handleMarkRead = async (id) => {
+    try {
+      await markNotificationRead(id);
+      setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, read: true } : n)));
+    } catch (e) {
+      console.error("Mark read error", e);
+    }
+  };
+
+  // Prefetch notifications when dashboard mounts (only for donors)
+  useEffect(() => {
+    const prefetch = async () => {
+      try {
+        setNotifError("");
+        if (!isDonor) return;
+        const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+        if (!userId) return;
+        const list = await getNotifications(userId);
+        setNotifications(Array.isArray(list) ? list : []);
+      } catch (e) {
+        console.error("Prefetch notifications error", e);
+        setNotifError("Failed to load notifications");
+      }
+    };
+    prefetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fire one dummy prediction on mount without affecting UI
   useEffect(() => {
@@ -53,11 +125,63 @@ const DonorDashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Load donation history when history tab is opened
+  useEffect(() => {
+    const loadHistory = async () => {
+      const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+      if (!userId) return;
+      setHistoryError("");
+      setHistoryLoading(true);
+      try {
+        const data = await getDonationsByUser(userId);
+        setDonations(Array.isArray(data) ? data : []);
+      } catch (e) {
+        setHistoryError("Failed to load donation history.");
+        console.error(e);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+    if (activeTab === "history") {
+      loadHistory();
+    }
+  }, [activeTab]);
+
+  const handleSubmitDonation = async (e) => {
+    e.preventDefault();
+    setSubmitError("");
+    setSubmitSuccess("");
+    const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+    if (!userId) {
+      setSubmitError("You must be logged in to donate.");
+      return;
+    }
+    if (!food || !quantity || !location) {
+      setSubmitError("Please fill all required fields.");
+      return;
+    }
+    setSubmitLoading(true);
+    try {
+      const payload = { userId, food, quantity, location, notes };
+      await createDonation(payload);
+      setSubmitSuccess("Donation submitted.");
+      setFood("");
+      setQuantity("");
+      setLocation("");
+      setNotes("");
+    } catch (e) {
+      setSubmitError("Failed to submit donation.");
+      console.error(e);
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case "profile":
         return (
-          <div>
+          <div className="dashboard-content">
             <h2>Profile</h2>
             <div className="card-grid">
               <div className="card">
@@ -77,7 +201,7 @@ const DonorDashboard = () => {
         );
       case "settings":
         return (
-          <div>
+          <div className="dashboard-content">
             <h2>Settings</h2>
             <div className="card">
               <p>Manage your account preferences and update your details here.</p>
@@ -86,43 +210,62 @@ const DonorDashboard = () => {
         );
       case "history":
         return (
-          <div>
+          <div className="dashboard-content">
             <h2>Donation History</h2>
+            {historyLoading && <p>Loading...</p>}
+            {historyError && <div className="card error"><p>{historyError}</p></div>}
+            {!historyLoading && donations.length === 0 && !historyError && (
+              <div className="card"><p>No donations yet.</p></div>
+            )}
             <div className="card-grid">
-              <div className="card">
-                <h4>🍞 Bread</h4>
-                <p>Donated on 15 Sept</p>
-              </div>
-              <div className="card">
-                <h4>🥗 Salad</h4>
-                <p>Donated on 20 Sept</p>
-              </div>
-              <div className="card">
-                <h4>🍎 Fruits</h4>
-                <p>Donated on 25 Sept</p>
-              </div>
+              {donations.map((d) => (
+                <div key={d._id} className="card">
+                  <h4>🍽️ {d.food}</h4>
+                  <p>Qty: {d.quantity}</p>
+                  <p>Location: {d.location}</p>
+                  <p>Status: {d.status}</p>
+                  <p>
+                    Date: {new Date(d.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         );
       case "currentDonations":
         return (
-          <div>
-            <h2>Current Donations</h2>
-            <div className="card-grid">
-              <div className="card">
-                <h4>🍛 Rice & Curry</h4>
-                <p>Status: Pending pickup</p>
-              </div>
-              <div className="card">
-                <h4>🥤 Juice Pack</h4>
-                <p>Status: Assigned to receiver</p>
-              </div>
+          <div className="dashboard-content">
+            <h2>New Donation</h2>
+            <div className="card">
+              {submitError && <div className="error">{submitError}</div>}
+              {submitSuccess && <div className="success">{submitSuccess}</div>}
+              <form onSubmit={handleSubmitDonation} className="form-grid">
+                <div className="form-row">
+                  <label>Food *</label>
+                  <input value={food} onChange={(e) => setFood(e.target.value)} placeholder="e.g., Rice & Curry" />
+                </div>
+                <div className="form-row">
+                  <label>Quantity *</label>
+                  <input value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="e.g., 3 plates / 2 kg" />
+                </div>
+                <div className="form-row">
+                  <label>Location *</label>
+                  <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Andheri West, Mumbai" />
+                </div>
+                <div className="form-row">
+                  <label>Notes</label>
+                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes (packaging, pickup window, etc.)" />
+                </div>
+                <button type="submit" disabled={submitLoading} className="btn btn-primary">
+                  {submitLoading ? "Submitting..." : "Submit Donation"}
+                </button>
+              </form>
             </div>
           </div>
         );
       case "rewards":
         return (
-          <div>
+          <div className="dashboard-content">
             <h2>Rewards</h2>
             <div className="card-grid">
               <div className="card reward">
@@ -138,7 +281,7 @@ const DonorDashboard = () => {
         );
       case "connections":
         return (
-          <div>
+          <div className="dashboard-content">
             <h2>Connections</h2>
             <div className="card-grid">
               <div className="card">
@@ -154,7 +297,7 @@ const DonorDashboard = () => {
         );
       case "map":
         return (
-          <div>
+          <div className="dashboard-content">
             <h2>Nearby Activity</h2>
             <MapSection
               title="Donor Map"
@@ -184,7 +327,7 @@ const DonorDashboard = () => {
           </div>
         );
       default:
-        return <h2>Welcome to Donor Dashboard</h2>;
+        return <div className="dashboard-content"><h2>Welcome to Donor Dashboard</h2></div>;
     }
   };
 
@@ -200,6 +343,28 @@ const DonorDashboard = () => {
       navigate("/login", { replace: true });
     }
   };
+
+  // If not logged in as donor, show prompt with Login button
+  if (!isDonor) {
+    return (
+      <div className="dashboard">
+        <div className="main-section">
+          <header className="topbar">
+            <div className="welcome-text">
+              <h3>Donor Login Required</h3>
+            </div>
+          </header>
+          <div className="content-area">
+            <div className="dashboard-content">
+              <h2>Please log in as Donor</h2>
+              <p>You must be logged in as a donor to access this page and submit donations.</p>
+              <a className="btn btn-primary" href="/login?role=donor">Login as Donor</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard">
@@ -268,9 +433,49 @@ const DonorDashboard = () => {
             <h3>Welcome, Donor 👋</h3>
           </div>
           <div className="topbar-actions">
-            <button className="icon-btn">
-              <FaBell />
-            </button>
+            <div className="notification-icon" style={{ position: "relative" }}>
+              <button className="icon-btn" onClick={toggleNotifications}>
+                <FaBell />
+                {unreadCount > 0 && (
+                  <span className="badge" style={{ position: "absolute", top: -4, right: -4, background: "#ef4444", color: "#fff", borderRadius: 10, padding: "0 6px", fontSize: 12 }}>
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+              {showNotifications && (
+                <div className="notification-dropdown" style={{ position: "absolute", right: 0, marginTop: 8, width: 320, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, boxShadow: "0 10px 15px rgba(0,0,0,0.1)", zIndex: 10 }}>
+                  <div style={{ padding: 12, borderBottom: "1px solid #e5e7eb" }}>
+                    <strong>Notifications</strong>
+                  </div>
+                  <div style={{ maxHeight: 300, overflowY: "auto" }}>
+                    {notifError && (
+                      <div style={{ padding: 12, color: "#b91c1c", background: "#fef2f2" }}>{notifError}</div>
+                    )}
+                    {notifications.length === 0 && (
+                      <div style={{ padding: 12, color: "#6b7280" }}>No notifications</div>
+                    )}
+                    {notifications.map((n) => (
+                      <div key={n._id} style={{ padding: 12, display: "flex", gap: 8, alignItems: "flex-start", background: n.read ? "#fff" : "#f9fafb" }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600 }}>{n.title}</div>
+                          <div style={{ color: "#374151", fontSize: 14 }}>{n.message}</div>
+                          {n.meta?.receiver && (
+                            <div style={{ color: "#374151", fontSize: 13, marginTop: 4 }}>
+                              <strong>Receiver:</strong> {n.meta.receiver.name || 'N/A'}
+                              {n.meta.receiver.email ? ` (${n.meta.receiver.email})` : ''}
+                            </div>
+                          )}
+                          <div style={{ color: "#6b7280", fontSize: 12, marginTop: 4 }}>{new Date(n.createdAt).toLocaleString()}</div>
+                        </div>
+                        {!n.read && (
+                          <button className="btn" onClick={() => handleMarkRead(n._id)} style={{ fontSize: 12 }}>Mark read</button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="user-info">
               <FaUser className="avatar" />
               <span className="username">Rajanikant jaiswar</span>
@@ -282,7 +487,7 @@ const DonorDashboard = () => {
         </header>
 
         {/* Dynamic content */}
-        <main className="content">{renderContent()}</main>
+        <div className="content-area">{renderContent()}</div>
       </div>
     </div>
   );

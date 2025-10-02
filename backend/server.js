@@ -1,8 +1,11 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+require("dotenv").config();
 
 const authRoutes = require("./routes/auth");
+const donationRoutes = require("./routes/donations");
+const notificationRoutes = require("./routes/notifications");
 const { spawn } = require("child_process");
 const path = require("path");
 
@@ -12,6 +15,10 @@ app.use(cors());
 
 // ✅ Use auth routes
 app.use("/auth", authRoutes);
+// ✅ Donation routes
+app.use("/api/donations", donationRoutes);
+// ✅ Notification routes
+app.use("/api/notifications", notificationRoutes);
 
 // ✅ Prediction Route (Donor Dashboard will call this)
 app.post("/predict", (req, res) => {
@@ -49,7 +56,10 @@ app.post("/predict", (req, res) => {
 
 // ✅ Connect DB
 mongoose
-  .connect("mongodb+srv://shuklaayaan27_db_user:mBY7qlD6r7oEOsxm@cluster0.3r9u0e9.mongodb.net/FoodShareDB?retryWrites=true&w=majority&appName=Cluster0")
+  .connect(
+    process.env.MONGODB_URI ||
+      "mongodb+srv://shuklaayaan27_db_user:mBY7qlD6r7oEOsxm@cluster0.3r9u0e9.mongodb.net/FoodShareDB?retryWrites=true&w=majority&appName=Cluster0"
+  )
   .then(() => console.log("✅ Connected to MongoDB Atlas"))
   .catch((err) => console.error("❌ DB connection error:", err));
 

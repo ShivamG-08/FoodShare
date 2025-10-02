@@ -140,6 +140,52 @@
   background: #ecf0f1;
 }
 
+/* Match Receiver layout naming */
+.content-area {
+  padding: 25px;
+  min-height: calc(100vh - 60px);
+  background: #f5f7fa;
+  max-width: 980px; /* tighter page width to match receiver */
+  margin: 0 auto;    /* center content */
+}
+
+@media (max-width: 1200px) {
+  .content-area { max-width: 900px; }
+}
+
+@media (max-width: 992px) {
+  .content-area { max-width: 760px; }
+}
+
+@media (max-width: 768px) {
+  .content-area { max-width: 100%; padding: 16px; }
+}
+
+.dashboard-content {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-content h2 {
+  margin-top: 0;
+  color: #2c3e50;
+}
+
+/* Shift welcome text from the left by ~4.5 cm */
+.topbar .welcome-text {
+  margin-left: 4.5cm; /* ~4–5 cm from left */
+}
+
+@media (max-width: 1200px) {
+  .topbar .welcome-text { margin-left: 3cm; }
+}
+
+@media (max-width: 992px) {
+  .topbar .welcome-text { margin-left: 2rem; }
+}
+
 /* Cards */
 .card-grid {
   display: grid;
@@ -173,4 +219,64 @@
 .card.reward {
   background: #ffeaa7;
   border: 1px solid #fdcb6e;
+}
+
+/* Form styles for donation form */
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-row label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.form-row input,
+.form-row textarea {
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #fff;
+}
+
+.btn.btn-primary {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.success {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
 }

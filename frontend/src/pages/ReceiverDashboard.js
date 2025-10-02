@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FaHome, 
   FaUser, 
@@ -13,6 +13,7 @@ import {
   FaMapMarkedAlt
 } from 'react-icons/fa';
 import './ReceiverDashboard.css';
+import { getAvailableDonations, acceptDonation as acceptDonationApi, markReceived as markReceivedApi } from '../services/donationApi';
 import MapSection from '../components/MapSection';
 
 const ReceiverDashboard = () => {
@@ -28,61 +29,85 @@ const ReceiverDashboard = () => {
   const [distance, setDistance] = useState('10');
   const [sortBy, setSortBy] = useState('nearest');
 
-  const donations = [
-    {
-      id: 1,
-      title: 'Fresh Bread & Pastries',
-      category: 'bakery',
-      quantity: '20 items',
-      distanceKm: 2.1,
-      expiresIn: '6 hrs',
-      donor: 'Sunrise Bakery',
-    },
-    {
-      id: 2,
-      title: 'Cooked Rice & Curry',
-      category: 'cooked',
-      quantity: '12 servings',
-      distanceKm: 5.8,
-      expiresIn: '3 hrs',
-      donor: 'City Canteen',
-    },
-    {
-      id: 3,
-      title: 'Fruits & Vegetables',
-      category: 'produce',
-      quantity: '2 crates',
-      distanceKm: 1.5,
-      expiresIn: '10 hrs',
-      donor: 'Green Farm',
-    },
-    {
-      id: 4,
-      title: 'Packaged Meals',
-      category: 'packaged',
-      quantity: '15 boxes',
-      distanceKm: 12.0,
-      expiresIn: '24 hrs',
-      donor: 'Helping Hands',
-    },
-  ];
+  const [available, setAvailable] = useState([]); // from backend
+  const [loadingAvail, setLoadingAvail] = useState(false);
+  const [errorAvail, setErrorAvail] = useState('');
 
-  const filtered = donations
-    .filter(d => (category === 'all' ? true : d.category === category))
-    .filter(d => d.title.toLowerCase().includes(search.toLowerCase()))
-    .filter(d => d.distanceKm <= Number(distance))
-    .sort((a, b) => {
-      if (sortBy === 'nearest') return a.distanceKm - b.distanceKm;
-      if (sortBy === 'soonest') return parseInt(a.expiresIn) - parseInt(b.expiresIn);
-      return 0;
+  // Load available donations on mount and when switching to browse
+  useEffect(() => {
+    const load = async () => {
+      setErrorAvail('');
+      setLoadingAvail(true);
+      try {
+        const data = await getAvailableDonations();
+        setAvailable(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.error(e);
+        setErrorAvail('Failed to load available donations');
+      } finally {
+        setLoadingAvail(false);
+      }
+    };
+
+  // markAsReceived moved to component scope
+    if (activeTab === 'browse' || activeTab === 'dashboard') {
+      load();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const filtered = available
+    .filter(d => {
+      const term = search.toLowerCase();
+      const donorName = d.donor?.name?.toLowerCase() || '';
+      return (
+        d.food?.toLowerCase().includes(term) ||
+        d.location?.toLowerCase().includes(term) ||
+        donorName.includes(term)
+      );
     });
 
-  const acceptDonation = (donation) => {
-    // Avoid duplicates
-    setAcceptedDonations((prev) => {
-      if (prev.some((a) => a.id === donation.id)) return prev;
-      return [...prev, { id: donation.id, at: new Date(), meta: donation }];
-    });
+  const markAsReceived = async (donationId) => {
+    try {
+      const receiverId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+      if (!receiverId) {
+        alert('You must be logged in as receiver');
+        return;
+      }
+      await markReceivedApi(donationId, receiverId);
+      // Remove from accepted list locally
+      setAcceptedDonations((prev) => prev.filter((a) => a.id !== donationId));
+      // Refresh available list (in case statuses changed)
+      const data = await getAvailableDonations();
+      setAvailable(Array.isArray(data) ? data : []);
+      alert('Marked as received. Donor will be notified.');
+    } catch (e) {
+      console.error(e);
+      alert('Failed to mark as received');
+    }
+  };
+
+  const acceptDonation = async (donation) => {
+    try {
+      const receiverId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+      if (!receiverId) {
+        alert('You must be logged in as receiver');
+        return;
+      }
+      await acceptDonationApi(donation.id, receiverId);
+      // Update local accepted list
+      setAcceptedDonations((prev) => {
+        if (prev.some((a) => a.id === donation.id)) return prev;
+        return [...prev, { id: donation.id, at: new Date(), meta: donation }];
+      });
+      alert('Accepted. Donor notified.');
+      // Refresh available list
+      const data = await getAvailableDonations();
+      setAvailable(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to accept donation');
+    }
   };
 
   const hasAccepted = (id) => acceptedDonations.some((a) => a.id === id);
@@ -194,51 +219,45 @@ const ReceiverDashboard = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-              <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                <option value="all">All Categories</option>
-                <option value="cooked">Cooked</option>
-                <option value="produce">Produce</option>
-                <option value="bakery">Bakery</option>
-                <option value="packaged">Packaged</option>
-              </select>
-              <select value={distance} onChange={(e) => setDistance(e.target.value)}>
-                <option value="3">Within 3 km</option>
-                <option value="5">Within 5 km</option>
-                <option value="10">Within 10 km</option>
-                <option value="20">Within 20 km</option>
-              </select>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                <option value="nearest">Sort: Nearest</option>
-                <option value="soonest">Sort: Expiring Soon</option>
-              </select>
+              {/* Category/Distance filters not available from backend data; keeping UI minimal */}
+              <div></div>
+              <div></div>
+              <div></div>
             </div>
 
             <div className="donations-grid">
-              {filtered.map((d) => (
-                <div key={d.id} className="donation-card">
+              {loadingAvail && <div className="empty-state">Loading...</div>}
+              {errorAvail && <div className="empty-state">{errorAvail}</div>}
+              {!loadingAvail && !errorAvail && filtered.map((d) => (
+                <div key={d._id} className="donation-card">
                   <div className="donation-header">
-                    <h3>{d.title}</h3>
-                    <span className={`badge-cat ${d.category}`}>{d.category}</span>
+                    <h3>{d.food}</h3>
+                    <span className={`badge-cat cooked`}>{d.status}</span>
                   </div>
                   <div className="donation-meta">
                     <span><strong>Quantity:</strong> {d.quantity}</span>
-                    <span><strong>Distance:</strong> {d.distanceKm} km</span>
-                    <span><strong>Expires:</strong> {d.expiresIn}</span>
-                    <span><strong>Donor:</strong> {d.donor}</span>
+                    <span><strong>Location:</strong> {d.location}</span>
+                    <span><strong>Donor:</strong> {d.donor?.name || 'Anonymous'}</span>
+                    <span><strong>Donor Email:</strong> {d.donor?.email || 'N/A'}</span>
+                    <span><strong>Date:</strong> {new Date(d.createdAt).toLocaleString()}</span>
                   </div>
                   <div className="donation-actions">
                     <button
                       className="btn accept"
-                      onClick={() => acceptDonation(d)}
-                      disabled={hasAccepted(d.id)}
+                      onClick={() => acceptDonation({ id: d._id, title: d.food })}
+                      disabled={hasAccepted(d._id)}
                     >
-                      {hasAccepted(d.id) ? 'Accepted' : 'Accept'}
+                      {hasAccepted(d._id) ? 'Accepted' : 'Accept'}
                     </button>
-                    <button className="btn details">Details</button>
+                    {hasAccepted(d._id) ? (
+                      <button className="btn" onClick={() => markAsReceived(d._id)}>Mark Received</button>
+                    ) : (
+                      <button className="btn details">Details</button>
+                    )}
                   </div>
                 </div>
               ))}
-              {filtered.length === 0 && (
+              {!loadingAvail && !errorAvail && filtered.length === 0 && (
                 <div className="empty-state">
                   No donations match your filters. Try expanding your distance or clearing search.
                 </div>
