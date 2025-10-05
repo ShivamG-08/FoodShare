@@ -17,6 +17,8 @@ import { getAvailableDonations, acceptDonation as acceptDonationApi, markReceive
 import MapSection from '../components/MapSection';
 
 const ReceiverDashboard = () => {
+  const userName = (typeof window !== 'undefined' && localStorage.getItem('userName')) || (typeof window !== 'undefined' && localStorage.getItem('userEmail')) || 'Receiver';
+  const userRole = (typeof window !== 'undefined' && localStorage.getItem('userRole')) || 'receiver';
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -173,7 +175,7 @@ const ReceiverDashboard = () => {
       case 'dashboard':
         return (
           <div className="dashboard-content">
-            <h2>Welcome back 👋</h2>
+            <h2>Welcome back, {userName} 👋</h2>
             <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
               <div className="card" style={{ padding: 16 }}>
                 <h3 style={{ marginTop: 0 }}>Nearby Donations</h3>
@@ -449,8 +451,8 @@ const ReceiverDashboard = () => {
                       <FaUser size={40} />
                     </div>
                     <div className="profile-info">
-                      <h4>John Doe</h4>
-                      <span>Receiver</span>
+                      <h4>{userName}</h4>
+                      <span>{userRole.charAt(0).toUpperCase() + userRole.slice(1)}</span>
                     </div>
                   </div>
                   <ul>

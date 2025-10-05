@@ -29,6 +29,8 @@ const DonorDashboard = () => {
   const role = typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
   const uid = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
   const isDonor = role === "donor" && !!uid;
+  const userName = (typeof window !== "undefined" && localStorage.getItem("userName")) || (typeof window !== "undefined" && localStorage.getItem("userEmail")) || "Donor";
+  const userEmail = (typeof window !== "undefined" && localStorage.getItem("userEmail")) || "";
 
   // Donation form state
   const [food, setFood] = useState("");
@@ -275,11 +277,11 @@ const DonorDashboard = () => {
             <div className="card-grid">
               <div className="card">
                 <h3>Name</h3>
-                <p>Rajanikant jaiswar</p>
+                <p>{userName}</p>
               </div>
               <div className="card">
                 <h3>Email</h3>
-                <p>john.doe@email.com</p>
+                <p>{userEmail || 'N/A'}</p>
               </div>
               <div className="card">
                 <h3>Total Donations</h3>
@@ -722,7 +724,7 @@ const DonorDashboard = () => {
         {/* Top Navbar */}
         <header className="topbar">
           <div className="welcome-text">
-            <h3>Welcome, Donor 👋</h3>
+            <h3>Welcome, {userName} 👋</h3>
           </div>
           <div className="topbar-actions">
             <div className="notification-icon" style={{ position: "relative" }}>
@@ -770,7 +772,7 @@ const DonorDashboard = () => {
             </div>
             <div className="user-info">
               <FaUser className="avatar" />
-              <span className="username">Rajanikant jaiswar</span>
+              <span className="username">{userName}</span>
               <button className="logout-btn" onClick={handleLogout}>
                 <FaSignOutAlt /> Logout
               </button>
