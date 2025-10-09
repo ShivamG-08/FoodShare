@@ -59,18 +59,24 @@ const DonorDashboard = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
   const [donations, setDonations] = useState([]);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [profileImage, setProfileImage] = useState(localStorage.getItem('profileImage') || '');
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Non-UI helper to call AI model; safe to use anywhere in dashboard logic
-  // Usage example (do not change UI):
-  // const result = await predictFreshnessForFood(foodData);
-  const predictFreshnessForFood = async (foodData) => {
-    try {
-      const prediction = await predictFreshness(foodData);
-      console.log("AI prediction:", prediction);
-      return prediction;
-    } catch (err) {
-      console.error("Prediction error:", err);
-      return null;
+  const handleProfileImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setIsUploading(true);
+      // In a real app, you would upload the file to your server here
+      // For now, we'll just create a local URL for the image
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageUrl = reader.result;
+        setProfileImage(imageUrl);
+        localStorage.setItem('profileImage', imageUrl); // Save to localStorage for persistence
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -92,14 +98,35 @@ const DonorDashboard = () => {
     }
   };
 
-  const handleMarkRead = async (id) => {
+  // Non-UI helper to call AI model; safe to use anywhere in dashboard logic
+  // Usage example (do not change UI):
+  // const result = await predictFreshnessForFood(foodData);
+  const predictFreshnessForFood = async (foodData) => {
     try {
-      await markNotificationRead(id);
-      setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, read: true } : n)));
-    } catch (e) {
-      console.error("Mark read error", e);
+      const prediction = await predictFreshness(foodData);
+      console.log("AI prediction:", prediction);
+      return prediction;
+    } catch (err) {
+      console.error("Prediction error:", err);
+      return null;
     }
   };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showNotifications && !event.target.closest(".notifications-dropdown")) {
+        setShowNotifications(false);
+      }
+      if (showProfileDropdown && !event.target.closest(".profile-dropdown")) {
+        setShowProfileDropdown(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [showNotifications, showProfileDropdown]);
 
   useEffect(() => {
     const prefetch = async () => {
@@ -274,18 +301,90 @@ const DonorDashboard = () => {
         return (
           <div className="dashboard-content">
             <h2>Profile</h2>
-            <div className="card-grid">
-              <div className="card">
-                <h3>Name</h3>
-                <p>{userName}</p>
+            <div className="profile-section" style={{ display: 'flex', gap: '2rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ 
+                  width: '120px', 
+                  height: '120px', 
+                  borderRadius: '50%', 
+                  backgroundColor: '#e5e7eb', 
+                  overflow: 'hidden',
+                  position: 'relative',
+                  border: '3px solid #fff',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                }}>
+                  {profileImage ? (
+                    <img 
+                      src={profileImage} 
+                      alt="Profile" 
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover' 
+                      }} 
+                    />
+                  ) : (
+                    <div style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      fontSize: '3rem',
+                      color: '#9ca3af'
+                    }}>
+                      <FaUser />
+                    </div>
+                  )}
+                  <label 
+                    htmlFor="profile-upload" 
+                    style={{
+                      position: 'absolute',
+                      bottom: '0',
+                      right: '0',
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '36px',
+                      height: '36px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                    }}
+                    title="Change profile picture"
+                  >
+                    <FaCog size={16} />
+                    <input
+                      id="profile-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfileImageChange}
+                      style={{ display: 'none' }}
+                      disabled={isUploading}
+                    />
+                  </label>
+                </div>
+                <h3 style={{ margin: '0', color: '#1f2937' }}>{userName}</h3>
+                <p style={{ margin: '0', color: '#6b7280', fontSize: '0.9rem' }}>{userEmail}</p>
               </div>
-              <div className="card">
-                <h3>Email</h3>
-                <p>{userEmail || 'N/A'}</p>
-              </div>
-              <div className="card">
-                <h3>Total Donations</h3>
-                <p>15</p>
+              
+              <div style={{ flex: 1 }}>
+                <div className="card-grid">
+                  <div className="card">
+                    <h3>Name</h3>
+                    <p>{userName}</p>
+                  </div>
+                  <div className="card">
+                    <h3>Email</h3>
+                    <p>{userEmail || 'N/A'}</p>
+                  </div>
+                  <div className="card">
+                    <h3>Total Donations</h3>
+                    <p>15</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -770,13 +869,143 @@ const DonorDashboard = () => {
                 </div>
               )}
             </div>
-            <div className="user-info">
-              <FaUser className="avatar" />
-              <span className="username">{userName}</span>
-              <button className="logout-btn" onClick={handleLogout}>
-                <FaSignOutAlt /> Logout
-              </button>
+            <div className="user-info" style={{ position: 'relative' }}>
+              <div 
+                className="user-avatar" 
+                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  cursor: 'pointer', 
+                  padding: '8px 12px', 
+                  borderRadius: '4px' 
+                }}
+              >
+                {profileImage ? (
+                  <img 
+                    src={profileImage} 
+                    alt="Profile" 
+                    style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      borderRadius: '50%', 
+                      objectFit: 'cover' 
+                    }} 
+                  />
+                ) : (
+                  <div style={{ 
+                    width: '32px', 
+                    height: '32px', 
+                    borderRadius: '50%', 
+                    backgroundColor: '#e5e7eb', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center' 
+                  }}>
+                    <FaUser style={{ color: '#4b5563' }} />
+                  </div>
+                )}
+                <span className="username" style={{ fontWeight: 500 }}>{userName}</span>
+              </div>
+
+              {showProfileDropdown && (
+                <div 
+                  className="profile-dropdown"
+                  style={{
+                    position: 'absolute',
+                    right: 0,
+                    top: '100%',
+                    marginTop: '8px',
+                    width: '200px',
+                    background: '#fff',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                    zIndex: 10,
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div 
+                    className="profile-dropdown-item" 
+                    onClick={() => {
+                      setActiveTab('profile');
+                      setShowProfileDropdown(false);
+                    }}
+                    style={{
+                      padding: '12px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                      color: '#1f2937',
+                      borderBottom: '1px solid #f3f4f6'
+                    }}
+                  >
+                    <FaUser size={16} style={{ color: '#6b7280' }} />
+                    <span>Profile</span>
+                  </div>
+                  <div 
+                    className="profile-dropdown-item"
+                    onClick={() => {
+                      setActiveTab('settings');
+                      setShowProfileDropdown(false);
+                    }}
+                    style={{
+                      padding: '12px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                      color: '#1f2937',
+                      borderBottom: '1px solid #f3f4f6'
+                    }}
+                  >
+                    <FaCog size={16} style={{ color: '#6b7280' }} />
+                    <span>Settings</span>
+                  </div>
+                  <div 
+                    className="profile-dropdown-item"
+                    onClick={handleLogout}
+                    style={{
+                      padding: '12px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                      color: '#dc2626'
+                    }}
+                  >
+                    <FaSignOutAlt size={16} />
+                    <span>Logout</span>
+                  </div>
+                </div>
+              )}
             </div>
+            <button 
+              onClick={handleLogout}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 16px',
+                backgroundColor: '#f3f4f6',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s',
+                marginLeft: '12px',
+                color: '#dc2626',
+                fontWeight: 500
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e5e7eb'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+            >
+              <FaSignOutAlt size={16} />
+              <span>Logout</span>
+            </button>
           </div>
         </header>
 
