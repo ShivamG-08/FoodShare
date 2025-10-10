@@ -19,7 +19,47 @@ import MapDistanceModal from '../components/MapDistanceModal';
 
 const ReceiverDashboard = () => {
   const userName = (typeof window !== 'undefined' && localStorage.getItem('userName')) || (typeof window !== 'undefined' && localStorage.getItem('userEmail')) || 'Receiver';
+  const userEmail = (typeof window !== 'undefined' && localStorage.getItem('userEmail')) || '';
   const userRole = (typeof window !== 'undefined' && localStorage.getItem('userRole')) || 'receiver';
+  const [profileImage, setProfileImage] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('profileImage') || '';
+    }
+    return '';
+  });
+  const [isUploading, setIsUploading] = useState(false);
+  
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      // Clear all user data from localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userId');
+      // Keep the profile image in localStorage for next login
+      // localStorage.removeItem('profileImage');
+      window.location.href = '/login';
+    }
+  };
+
+  const handleProfileImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setIsUploading(true);
+      // In a real app, you would upload the file to your server here
+      // For now, we'll just create a local URL for the image
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageUrl = reader.result;
+        setProfileImage(imageUrl);
+        localStorage.setItem('profileImage', imageUrl); // Save to localStorage for persistence
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -562,29 +602,230 @@ const ReceiverDashboard = () => {
                 </div>
               )}
             </div>
-            <div 
-              className="profile-dropdown" 
-              onClick={() => setShowProfile(!showProfile)}
+            <button 
+              onClick={handleLogout}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 16px',
+                backgroundColor: '#f3f4f6',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s',
+                marginLeft: '12px',
+                color: '#dc2626',
+                fontWeight: 500,
+                height: '40px',
+                fontSize: '14px'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
             >
-              <div className="avatar">
-                <FaUser />
+              <FaSignOutAlt size={16} />
+              <span>Logout</span>
+            </button>
+            <div className="profile-dropdown" style={{ position: 'relative' }}>
+              <div 
+                className="user-avatar"
+                onClick={() => setShowProfile(!showProfile)}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  cursor: 'pointer', 
+                  padding: '8px 12px', 
+                  borderRadius: '4px' 
+                }}
+              >
+                {profileImage ? (
+                  <img 
+                    src={profileImage} 
+                    alt="Profile" 
+                    style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      borderRadius: '50%', 
+                      objectFit: 'cover' 
+                    }} 
+                  />
+                ) : (
+                  <div style={{ 
+                    width: '32px', 
+                    height: '32px', 
+                    borderRadius: '50%', 
+                    backgroundColor: '#e5e7eb', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center' 
+                  }}>
+                    <FaUser style={{ color: '#4b5563' }} />
+                  </div>
+                )}
+                <span className="username" style={{ fontWeight: 500 }}>{userName}</span>
               </div>
+
               {showProfile && (
-                <div className="profile-menu">
-                  <div className="profile-header">
-                    <div className="profile-avatar">
-                      <FaUser size={40} />
+                <div 
+                  className="profile-menu"
+                  style={{
+                    position: 'absolute',
+                    right: 0,
+                    top: '100%',
+                    marginTop: '8px',
+                    width: '240px',
+                    background: '#fff',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                    zIndex: 10,
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div 
+                    className="profile-header"
+                    style={{
+                      padding: '16px',
+                      textAlign: 'center',
+                      borderBottom: '1px solid #f3f4f6'
+                    }}
+                  >
+                    <div style={{ position: 'relative', display: 'inline-block', marginBottom: '12px' }}>
+                      {profileImage ? (
+                        <img 
+                          src={profileImage} 
+                          alt="Profile" 
+                          style={{ 
+                            width: '80px', 
+                            height: '80px', 
+                            borderRadius: '50%', 
+                            objectFit: 'cover',
+                            border: '3px solid #fff',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                          }} 
+                        />
+                      ) : (
+                        <div style={{ 
+                          width: '80px', 
+                          height: '80px', 
+                          borderRadius: '50%', 
+                          backgroundColor: '#e5e7eb', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          margin: '0 auto',
+                          border: '3px solid #fff',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}>
+                          <FaUser size={32} style={{ color: '#6b7280' }} />
+                        </div>
+                      )}
+                      <label 
+                        htmlFor="profile-upload"
+                        style={{
+                          position: 'absolute',
+                          bottom: '0',
+                          right: '0',
+                          backgroundColor: '#3b82f6',
+                          color: 'white',
+                          borderRadius: '50%',
+                          width: '28px',
+                          height: '28px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        }}
+                      >
+                        {isUploading ? (
+                          <div className="spinner" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderRadius: '50%', borderTopColor: '#fff', animation: 'spin 1s ease-in-out infinite' }}></div>
+                        ) : (
+                          <FaUser size={12} />
+                        )}
+                        <input
+                          id="profile-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfileImageChange}
+                          style={{ display: 'none' }}
+                          disabled={isUploading}
+                        />
+                      </label>
                     </div>
-                    <div className="profile-info">
-                      <h4>{userName}</h4>
-                      <span>{userRole.charAt(0).toUpperCase() + userRole.slice(1)}</span>
+                    <h4 style={{ margin: '8px 0 4px', color: '#111827' }}>{userName}</h4>
+                    <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>{userEmail || 'No email'}</p>
+                    <div style={{ 
+                      display: 'inline-block',
+                      marginTop: '8px',
+                      padding: '4px 8px',
+                      backgroundColor: '#e0f2fe',
+                      color: '#0369a1',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 500
+                    }}>
+                      {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
                     </div>
                   </div>
-                  <ul>
-                    <li><FaUser /> My Profile</li>
-                    <li><FaCog /> Settings</li>
-                    <li className="logout"><FaSignOutAlt /> Logout</li>
-                  </ul>
+                  <div style={{ padding: '8px 0' }}>
+                    <div 
+                      className="profile-dropdown-item"
+                      onClick={() => {
+                        setActiveTab('profile');
+                        setShowProfile(false);
+                      }}
+                      style={{
+                        padding: '12px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s',
+                        color: '#1f2937',
+                        borderBottom: '1px solid #f3f4f6'
+                      }}
+                    >
+                      <FaUser size={16} style={{ color: '#6b7280' }} />
+                      <span>My Profile</span>
+                    </div>
+                    <div 
+                      className="profile-dropdown-item"
+                      onClick={() => {
+                        setActiveTab('settings');
+                        setShowProfile(false);
+                      }}
+                      style={{
+                        padding: '12px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s',
+                        color: '#1f2937',
+                        borderBottom: '1px solid #f3f4f6'
+                      }}
+                    >
+                      <FaCog size={16} style={{ color: '#6b7280' }} />
+                      <span>Settings</span>
+                    </div>
+                    <div 
+                      className="profile-dropdown-item"
+                      onClick={handleLogout}
+                      style={{
+                        padding: '12px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s',
+                        color: '#dc2626'
+                      }}
+                    >
+                      <FaSignOutAlt size={16} />
+                      <span>Logout</span>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
