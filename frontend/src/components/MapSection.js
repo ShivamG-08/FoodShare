@@ -77,6 +77,7 @@ const MapSection = ({
   center = { lat: 19.076, lng: 72.8777 },
   markers = [], // [{ id, position: {lat,lng}, label, color }]
   initialRadiusKm = 5,
+  autoGeolocate = false, // if true, attempts geolocation on mount
 }) => {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -120,8 +121,8 @@ const MapSection = ({
           }
         });
 
-        // Try geolocate user and show a distinct pin + radius
-        if (navigator.geolocation) {
+        // Try geolocate user and show a distinct pin + radius (only if explicitly enabled)
+        if (autoGeolocate && navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
               const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };

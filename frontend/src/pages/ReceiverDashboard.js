@@ -15,6 +15,7 @@ import {
 import './ReceiverDashboard.css';
 import { getAvailableDonations, acceptDonation as acceptDonationApi, markReceived as markReceivedApi } from '../services/donationApi';
 import MapSection from '../components/MapSection';
+import MapDistanceModal from '../components/MapDistanceModal';
 
 const ReceiverDashboard = () => {
   const userName = (typeof window !== 'undefined' && localStorage.getItem('userName')) || (typeof window !== 'undefined' && localStorage.getItem('userEmail')) || 'Receiver';
@@ -35,6 +36,84 @@ const ReceiverDashboard = () => {
   const [loadingAvail, setLoadingAvail] = useState(false);
   const [errorAvail, setErrorAvail] = useState('');
 
+  // Map modal state
+  const [mapOpen, setMapOpen] = useState(false);
+  const [mapOrigin, setMapOrigin] = useState('');
+  const [mapDestination, setMapDestination] = useState('');
+
+  // Receiver stored location (per-user, with consent)
+  const receiverId = (typeof window !== 'undefined' && localStorage.getItem('userId')) || null;
+  const locKey = receiverId ? `receiverLocation:${receiverId}` : null;
+  const consentKey = receiverId ? `receiverLocationConsent:${receiverId}` : null;
+  const askedKey = receiverId ? `receiverLocationAsked:${receiverId}` : null;
+  const [storedLocation, setStoredLocation] = useState('');
+  const [hasConsent, setHasConsent] = useState(false);
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [manualLocation, setManualLocation] = useState('');
+  const [consentChecked, setConsentChecked] = useState(false);
+
+  // Load stored location once per receiver
+  useEffect(() => {
+    try {
+      if (!receiverId) return;
+      const c = consentKey ? localStorage.getItem(consentKey) === 'true' : false;
+      const loc = locKey ? localStorage.getItem(locKey) || '' : '';
+      const asked = askedKey ? localStorage.getItem(askedKey) === 'true' : false;
+      setHasConsent(c);
+      setStoredLocation(loc);
+      // Only auto-prompt once per receiver if they haven't been asked before
+      if (!asked && (!c || !loc)) {
+        setShowLocationPrompt(true);
+        if (askedKey) localStorage.setItem(askedKey, 'true');
+      }
+    } catch (_) {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [receiverId]);
+
+  const saveStoredLocation = (value) => {
+    if (!receiverId || !locKey || !consentKey) return;
+    try {
+      localStorage.setItem(consentKey, 'true');
+      localStorage.setItem(locKey, value);
+      setHasConsent(true);
+      setStoredLocation(value);
+      setShowLocationPrompt(false);
+    } catch (e) {
+      console.error('Failed to store location', e);
+    }
+  };
+
+  const clearStoredLocation = () => {
+    if (!receiverId || !locKey || !consentKey) return;
+    try {
+      localStorage.removeItem(locKey);
+      // keep consent so we don't re-prompt unless user decides to set again
+      setStoredLocation('');
+      // Do not re-show automatically; user can click Change location when they want
+    } catch (e) {
+      console.error('Failed to clear location', e);
+    }
+  };
+
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation not supported. Please enter location manually.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        // Store as "lat,lng" string which Google Maps embed accepts
+        const value = `${pos.coords.latitude},${pos.coords.longitude}`;
+        saveStoredLocation(value);
+      },
+      (err) => {
+        console.warn('Geolocation error', err);
+        alert('Unable to get current location. Please enter it manually.');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   // Load available donations on mount and when switching to browse
   useEffect(() => {
     const load = async () => {
@@ -50,22 +129,20 @@ const ReceiverDashboard = () => {
         setLoadingAvail(false);
       }
     };
-
-  // markAsReceived moved to component scope
+    // markAsReceived moved to component scope
     if (activeTab === 'browse' || activeTab === 'dashboard') {
       load();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const filtered = available
     .filter(d => {
+      // Text search only; show all donations to all receivers
       const term = search.toLowerCase();
-      const donorName = d.donor?.name?.toLowerCase() || '';
       return (
-        d.food?.toLowerCase().includes(term) ||
-        d.location?.toLowerCase().includes(term) ||
-        donorName.includes(term)
+        (d.food || '').toLowerCase().includes(term) ||
+        (d.location || '').toLowerCase().includes(term) ||
+        (d.donor?.name || '').toLowerCase().includes(term)
       );
     });
 
@@ -96,7 +173,8 @@ const ReceiverDashboard = () => {
         alert('You must be logged in as receiver');
         return;
       }
-      await acceptDonationApi(donation.id, receiverId);
+      const receiverLocation = (storedLocation && storedLocation.trim()) || (prefs.location && prefs.location.trim()) || '';
+      await acceptDonationApi(donation.id, receiverId, receiverLocation || undefined);
       // Update local accepted list
       setAcceptedDonations((prev) => {
         if (prev.some((a) => a.id === donation.id)) return prev;
@@ -110,6 +188,20 @@ const ReceiverDashboard = () => {
       console.error(e);
       alert('Failed to accept donation');
     }
+  };
+
+  // Open map from receiver to donor (component scope)
+  const openMapToDonor = (donorAddress) => {
+    // Use stored location if available; otherwise ask user to set now
+    const originAddr = (storedLocation && storedLocation.trim()) || (prefs.location && prefs.location.trim()) || '';
+    if (!originAddr) {
+      setShowLocationPrompt(true);
+      return;
+    }
+    if (!donorAddress) return;
+    setMapOrigin(originAddr);
+    setMapDestination(donorAddress);
+    setMapOpen(true);
   };
 
   const hasAccepted = (id) => acceptedDonations.some((a) => a.id === id);
@@ -150,6 +242,14 @@ const ReceiverDashboard = () => {
     console.log('Saving preferences', prefs);
     alert('Settings saved');
   };
+
+  // Sync prefs.location with storedLocation for display convenience
+  useEffect(() => {
+    if (storedLocation && !prefs.location) {
+      setPrefs(p => ({ ...p, location: storedLocation }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storedLocation]);
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
@@ -238,7 +338,17 @@ const ReceiverDashboard = () => {
                   </div>
                   <div className="donation-meta">
                     <span><strong>Quantity:</strong> {d.quantity}</span>
-                    <span><strong>Location:</strong> {d.location}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <strong>Location:</strong> {d.location}
+                      <button
+                        className="btn"
+                        type="button"
+                        onClick={() => openMapToDonor(d.location)}
+                        title="Show distance and route"
+                      >
+                        <FaMapMarkedAlt style={{ marginRight: 6 }} /> Map
+                      </button>
+                    </span>
                     <span><strong>Donor:</strong> {d.donor?.name || 'Anonymous'}</span>
                     <span><strong>Donor Email:</strong> {d.donor?.email || 'N/A'}</span>
                     <span><strong>Date:</strong> {new Date(d.createdAt).toLocaleString()}</span>
@@ -290,6 +400,20 @@ const ReceiverDashboard = () => {
                     value={prefs.location}
                     onChange={(e) => setPrefs({ ...prefs, location: e.target.value })}
                   />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                    <button type="button" className="btn" onClick={() => setShowLocationPrompt(true)}>Change location</button>
+                    {storedLocation && (
+                      <button type="button" className="btn" onClick={clearStoredLocation} title="Clear stored location from this device">Clear stored location</button>
+                    )}
+                    {!storedLocation && (
+                      <span style={{ fontSize: 12, color: '#6b7280' }}>No stored location yet.</span>
+                    )}
+                  </div>
+                  {storedLocation && (
+                    <div style={{ marginTop: 6, fontSize: 13, color: '#374151' }}>
+                      <strong>Stored:</strong> {storedLocation}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -385,6 +509,7 @@ const ReceiverDashboard = () => {
   };
 
   return (
+    <>
     <div className="dashboard-container">
       {/* Sidebar */}
       <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
@@ -472,6 +597,48 @@ const ReceiverDashboard = () => {
         </div>
       </div>
     </div>
+    {showLocationPrompt && (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+        <div style={{ background: '#fff', width: '92%', maxWidth: 520, borderRadius: 12, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0 }}>Share your location</h3>
+            <button className="close-btn" onClick={() => setShowLocationPrompt(false)} aria-label="Close">&times;</button>
+          </div>
+          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ margin: 0, color: '#374151' }}>We use your location to show nearby donations. With your consent, we'll store it on this device and you can change or clear it anytime in Settings.</p>
+            <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 14 }}>
+              <input type="checkbox" checked={consentChecked} onChange={(e) => setConsentChecked(e.target.checked)} />
+              <span>I consent to storing my location on this device for improved matching.</span>
+            </label>
+            <div>
+              <label style={{ display: 'block', fontSize: 14, marginBottom: 6 }}>Enter location manually (address, area or lat,lng)</label>
+              <input
+                type="text"
+                value={manualLocation}
+                onChange={(e) => setManualLocation(e.target.value)}
+                placeholder="e.g., Andheri West, Mumbai or 19.07,72.88"
+                style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 8 }}
+              />
+            </div>
+          </div>
+          <div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <button className="btn" onClick={() => setShowLocationPrompt(false)}>Not now</button>
+            <button className="btn" onClick={useCurrentLocation} disabled={!consentChecked}>Use my current location</button>
+            <button className="btn primary" onClick={() => { if (!consentChecked) return; if (manualLocation.trim()) saveStoredLocation(manualLocation.trim()); }} disabled={!consentChecked || !manualLocation.trim()}>Save manual</button>
+          </div>
+        </div>
+      </div>
+    )}
+    {mapOpen && (
+      <MapDistanceModal
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        origin={mapOrigin}
+        destination={mapDestination}
+        title="Receiver to Donor Directions"
+      />
+    )}
+    </>
   );
 };
 

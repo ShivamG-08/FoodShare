@@ -61,7 +61,7 @@ router.get("/available", async (_req, res) => {
 router.patch("/:id/accept", async (req, res) => {
   try {
     const { id } = req.params;
-    const { receiverId } = req.body;
+    const { receiverId, receiverLocation } = req.body;
     if (!receiverId) return res.status(400).json({ message: "receiverId is required" });
 
     const updated = await Donation.findOneAndUpdate(
@@ -82,7 +82,13 @@ router.patch("/:id/accept", async (req, res) => {
         type: "donation_accepted",
         title: "Donation accepted",
         message: `Your donation '${updated.food}' has been accepted by ${receiver?.name || 'a receiver'}.`,
-        meta: { donationId: updated._id, receiverId, receiver: receiver ? { id: receiver._id, name: receiver.name, email: receiver.email } : { id: receiverId } },
+        meta: {
+          donationId: updated._id,
+          receiverId,
+          receiver: receiver
+            ? { id: receiver._id, name: receiver.name, email: receiver.email, location: receiverLocation || undefined }
+            : { id: receiverId, location: receiverLocation || undefined }
+        },
       });
     } catch (e) {
       console.error("Create notification (accept) error:", e);

@@ -21,10 +21,10 @@ export async function getAvailableDonations() {
   return data;
 }
 
-export async function acceptDonation(donationId, receiverId) {
+export async function acceptDonation(donationId, receiverId, receiverLocation) {
   const { data } = await axios.patch(
     `${BASE_URL}/api/donations/${donationId}/accept`,
-    { receiverId },
+    { receiverId, receiverLocation },
     { headers: { 'Content-Type': 'application/json' } }
   );
   return data;

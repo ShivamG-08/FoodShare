@@ -18,6 +18,7 @@ import {
 import "./DonorDashboard.css";
 import { predictFreshness } from "../services/predictionApi";
 import MapSection from "../components/MapSection";
+import MapDistanceModal from "../components/MapDistanceModal";
 import { createDonation, getDonationsByUser } from "../services/donationApi";
 import { getNotifications, markNotificationRead } from "../services/notificationApi";
 
@@ -49,6 +50,11 @@ const DonorDashboard = () => {
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
 
+  // Map modal state
+  const [mapOpen, setMapOpen] = useState(false);
+  const [mapOrigin, setMapOrigin] = useState("");
+  const [mapDestination, setMapDestination] = useState("");
+
   // Notifications state
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -72,6 +78,15 @@ const DonorDashboard = () => {
       console.error("Prediction error:", err);
       return null;
     }
+  };
+
+  // Open map helper (donor wants to see distance from receiver to donor)
+  const openMapForLocation = (donorAddress) => {
+    const receiverAddr = window.prompt("Enter receiver location to see directions:");
+    if (!receiverAddr || !donorAddress) return;
+    setMapOrigin(receiverAddr);
+    setMapDestination(donorAddress);
+    setMapOpen(true);
   };
 
   const toggleNotifications = async () => {
@@ -309,17 +324,50 @@ const DonorDashboard = () => {
               <div className="card"><p>No donations yet.</p></div>
             )}
             <div className="card-grid">
-              {donations.map((d) => (
+              {donations.map((d) => {
+                const acceptNotif = notifications.find(n => n.type === 'donation_accepted' && n.meta?.donationId === d._id);
+                const rcv = acceptNotif?.meta?.receiver;
+                return (
                 <div key={d._id} className="card">
                   <h4>🍽️ {d.food}</h4>
                   <p>Qty: {d.quantity}</p>
-                  <p>Location: {d.location}</p>
+                  <p style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span>Location: {d.location}</span>
+                    <button
+                      className="btn"
+                      type="button"
+                      onClick={() => openMapForLocation(d.location)}
+                      title="Show distance from receiver to this pickup"
+                    >
+                      <FaMapMarkedAlt style={{ marginRight: 6 }} /> Map
+                    </button>
+                  </p>
                   <p>Status: {d.status}</p>
+                  {rcv && (
+                    <div style={{ marginTop: 8, padding: 8, background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8 }}>
+                      <div style={{ fontWeight: 600, marginBottom: 4 }}>Accepted by Receiver</div>
+                      <div><strong>Name:</strong> {rcv.name || 'N/A'}</div>
+                      {rcv.email && (<div><strong>Email:</strong> {rcv.email}</div>)}
+                      {rcv.location && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                          <span><strong>Receiver Location:</strong> {rcv.location}</span>
+                          <button
+                            className="btn"
+                            type="button"
+                            onClick={() => { setMapOrigin(rcv.location); setMapDestination(d.location); setMapOpen(true); }}
+                            title="View route from receiver to pickup"
+                          >
+                            <FaMapMarkedAlt style={{ marginRight: 6 }} /> Route
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <p>
                     Date: {new Date(d.createdAt).toLocaleString()}
                   </p>
                 </div>
-              ))}
+              );})}
             </div>
           </div>
         );
@@ -400,11 +448,23 @@ const DonorDashboard = () => {
                 
                 <div className="form-row">
                   <label>Pickup Location *</label>
-                  <input 
-                    value={location} 
-                    onChange={(e) => setLocation(e.target.value)} 
-                    placeholder="e.g., Andheri West, Mumbai" 
-                  />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input 
+                      value={location} 
+                      onChange={(e) => setLocation(e.target.value)} 
+                      placeholder="e.g., Andheri West, Mumbai" 
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => openMapForLocation(location)}
+                      disabled={!location}
+                      title="Show distance from receiver to this pickup"
+                    >
+                      <FaMapMarkedAlt style={{ marginRight: 6 }} /> Map
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="form-row">
@@ -661,6 +721,7 @@ const DonorDashboard = () => {
   }
 
   return (
+    <>
     <div className="dashboard">
       {/* Sidebar */}
       <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
@@ -755,8 +816,15 @@ const DonorDashboard = () => {
                           <div style={{ color: "#374151", fontSize: 14 }}>{n.message}</div>
                           {n.meta?.receiver && (
                             <div style={{ color: "#374151", fontSize: 13, marginTop: 4 }}>
-                              <strong>Receiver:</strong> {n.meta.receiver.name || 'N/A'}
-                              {n.meta.receiver.email ? ` (${n.meta.receiver.email})` : ''}
+                              <div>
+                                <strong>Receiver:</strong> {n.meta.receiver.name || 'N/A'}
+                                {n.meta.receiver.email ? ` (${n.meta.receiver.email})` : ''}
+                              </div>
+                              {n.meta.receiver.location && (
+                                <div style={{ marginTop: 2 }}>
+                                  <strong>Receiver Location:</strong> {n.meta.receiver.location}
+                                </div>
+                              )}
                             </div>
                           )}
                           <div style={{ color: "#6b7280", fontSize: 12, marginTop: 4 }}>{new Date(n.createdAt).toLocaleString()}</div>
@@ -784,6 +852,16 @@ const DonorDashboard = () => {
         <div className="content-area">{renderContent()}</div>
       </div>
     </div>
+    {mapOpen && (
+      <MapDistanceModal
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        origin={mapOrigin}
+        destination={mapDestination}
+        title="Receiver to Donor Directions"
+      />
+    )}
+    </>
   );
 };
 
