@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   FaTachometerAlt,
   FaUsers,
@@ -23,11 +25,7 @@ function StatCard({ title, value, sub, icon }) {
   );
 }
 
-const mockUsers = [
-  { id: 1, name: "John Doe", role: "receiver", email: "john@example.com", status: "active" },
-  { id: 2, name: "Acme Foods", role: "donor", email: "donate@acme.com", status: "active" },
-  { id: 3, name: "Jane Smith", role: "receiver", email: "jane@x.com", status: "blocked" },
-];
+const mockUsers = [];
 
 const mockDonations = [
   { id: 101, title: "Bread & Pastries", donor: "Sunrise Bakery", qty: "20 items", status: "available" },
@@ -60,6 +58,29 @@ export default function AdminDashboard() {
     console.log("Saving admin settings", settings);
     alert("Settings saved");
   };
+
+  useEffect(() => {
+    let active = true;
+    axios
+      .get("http://localhost:5000/api/users")
+      .then((res) => {
+        if (!active) return;
+        const list = Array.isArray(res.data?.users) ? res.data.users : [];
+        const mapped = list.map((u) => ({
+          id: u._id || u.id,
+          name: u.name,
+          role: u.role,
+          email: u.email,
+          status: "active",
+        }));
+        setUsers(mapped);
+      })
+      .catch(() => {})
+      .finally(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filteredUsers = users.filter(
     (u) => u.name.toLowerCase().includes(query.toLowerCase()) || u.email.toLowerCase().includes(query.toLowerCase())

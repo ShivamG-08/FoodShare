@@ -10,6 +10,13 @@
   --transition: all 0.3s ease;
 }
 
+/* Dark theme overrides */
+:root.dark {
+  --dark-color: #e5e7eb; /* text color */
+  --light-color: #9ca3af;
+  --white: #111827; /* surface/background */
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -19,7 +26,7 @@
 html {
   scroll-behavior: smooth;
 }
-
+ 
 body {
   font-family: 'Poppins', Arial, sans-serif;
   line-height: 1.6;
@@ -27,10 +34,6 @@ body {
   background-color: var(--white);
   overflow-x: hidden;
 }
-
-h1,h2,h3,h4,h5,h6 { margin-bottom: 1rem; font-weight: 600; line-height: 1.2; }
-p { margin-bottom: 1rem; color: var(--light-color); }
-a { text-decoration: none; color: inherit; transition: var(--transition); }
 img { max-width: 100%; display: block; height: auto; }
 
 .container {

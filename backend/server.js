@@ -8,6 +8,7 @@ const authRoutes = require("./routes/auth");
 const donationRoutes = require("./routes/donations");
 const notificationRoutes = require("./routes/notifications");
 const predictionRoutes = require("./routes/prediction");
+const usersRoutes = require("./routes/users");
 
 // Initialize express app
 const app = express();
@@ -21,6 +22,7 @@ app.use("/auth", authRoutes);
 app.use("/api/donations", donationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/prediction", predictionRoutes);
+app.use("/api/users", usersRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

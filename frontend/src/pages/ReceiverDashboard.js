@@ -22,12 +22,20 @@ const ReceiverDashboard = () => {
   const userEmail = (typeof window !== 'undefined' && localStorage.getItem('userEmail')) || '';
   const userRole = (typeof window !== 'undefined' && localStorage.getItem('userRole')) || 'receiver';
   const [profileImage, setProfileImage] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('profileImage') || '';
+    if (typeof window === 'undefined') return '';
+    const role = localStorage.getItem('userRole') || 'receiver';
+    const uid = localStorage.getItem('userId') || '';
+    const key = uid ? `profileImage:${role}:${uid}` : 'profileImage:guest';
+    // migrate old global key once
+    const old = localStorage.getItem('profileImage');
+    const existing = localStorage.getItem(key);
+    if (!existing && old) {
+      try { localStorage.setItem(key, old); } catch (_) {}
     }
-    return '';
+    return localStorage.getItem(key) || '';
   });
   const [isUploading, setIsUploading] = useState(false);
+  const [theme, setTheme] = useState(() => (typeof window !== 'undefined' && localStorage.getItem('theme')) || 'light');
   
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -43,6 +51,19 @@ const ReceiverDashboard = () => {
     }
   };
 
+  // Apply theme to document root and persist
+  useEffect(() => {
+    try {
+      if (typeof document !== 'undefined') {
+        const root = document.documentElement;
+        if (theme === 'dark') root.classList.add('dark'); else root.classList.remove('dark');
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('theme', theme);
+      }
+    } catch (_) {}
+  }, [theme]);
+
   const handleProfileImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -53,7 +74,12 @@ const ReceiverDashboard = () => {
       reader.onloadend = () => {
         const imageUrl = reader.result;
         setProfileImage(imageUrl);
-        localStorage.setItem('profileImage', imageUrl); // Save to localStorage for persistence
+        try {
+          const role = localStorage.getItem('userRole') || 'receiver';
+          const uid = localStorage.getItem('userId') || '';
+          const key = uid ? `profileImage:${role}:${uid}` : 'profileImage:guest';
+          localStorage.setItem(key, imageUrl);
+        } catch (_) {}
         setIsUploading(false);
       };
       reader.readAsDataURL(file);
@@ -258,7 +284,7 @@ const ReceiverDashboard = () => {
     emailAlerts: true,
     pushAlerts: false,
     maxDistance: 10,
-    theme: 'light',
+    theme: (typeof window !== 'undefined' && localStorage.getItem('theme')) || 'light',
     categories: {
       cooked: true,
       produce: true,
@@ -282,6 +308,12 @@ const ReceiverDashboard = () => {
     console.log('Saving preferences', prefs);
     alert('Settings saved');
   };
+
+  // Keep prefs.theme and global theme state in sync
+  useEffect(() => {
+    setPrefs(p => ({ ...p, theme }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme]);
 
   // Sync prefs.location with storedLocation for display convenience
   useEffect(() => {
@@ -396,7 +428,14 @@ const ReceiverDashboard = () => {
                   <div className="donation-actions">
                     <button
                       className="btn accept"
-                      onClick={() => acceptDonation({ id: d._id, title: d.food })}
+                      onClick={() => acceptDonation({
+                        id: d._id,
+                        food: d.food,
+                        quantity: d.quantity,
+                        location: d.location,
+                        donor: d.donor,
+                        createdAt: d.createdAt,
+                      })}
                       disabled={hasAccepted(d._id)}
                     >
                       {hasAccepted(d._id) ? 'Accepted' : 'Accept'}
@@ -494,7 +533,7 @@ const ReceiverDashboard = () => {
                   <label>Theme</label>
                   <select
                     value={prefs.theme}
-                    onChange={(e) => setPrefs({ ...prefs, theme: e.target.value })}
+                    onChange={(e) => { const val = e.target.value; setPrefs({ ...prefs, theme: val }); setTheme(val); }}
                   >
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
@@ -522,6 +561,34 @@ const ReceiverDashboard = () => {
                 <button type="submit" className="save-btn">Save Settings</button>
               </div>
             </form>
+          </div>
+        );
+      case 'connections':
+        return (
+          <div className="dashboard-content">
+            <h2>Connections</h2>
+            <div className="card-grid">
+              {acceptedDonations.map((a) => {
+                const m = a.meta || {};
+                const donor = m.donor || {};
+                return (
+                  <div key={a.id} className="card">
+                    <h4 style={{ marginTop: 0 }}>{donor.name || 'Donor'}</h4>
+                    <p style={{ marginTop: 4, color: '#6b7280' }}>Donor</p>
+                    {donor.email && <p>Email: {donor.email}</p>}
+                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e5e7eb' }}>
+                      <div><strong>Food:</strong> {m.food || 'N/A'}</div>
+                      {m.quantity && <div><strong>Quantity:</strong> {m.quantity}</div>}
+                      {m.location && <div><strong>Pickup:</strong> {m.location}</div>}
+                      <div><strong>Accepted at:</strong> {new Date(a.at).toLocaleString()}</div>
+                    </div>
+                  </div>
+                );
+              })}
+              {acceptedDonations.length === 0 && (
+                <div className="card"><p>No connections yet. Accept a donation to see it here.</p></div>
+              )}
+            </div>
           </div>
         );
       case 'map':
