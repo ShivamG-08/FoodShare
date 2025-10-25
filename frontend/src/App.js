@@ -6,6 +6,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
 import DonorDashboard from "./pages/DonorDashboard";
 import ReceiverDashboard from "./pages/ReceiverDashboard";
+import ResetPassword from "./pages/ResetPassword";
 import "./App.css";
 
 /* ---------------- Hero ---------------- */
@@ -14,14 +15,14 @@ function Hero() {
     <header
       className="hero"
       id="home"
-      style={{
-        backgroundImage:
-          "linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(/kids.png)",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-        backgroundSize: "cover",
-      }}
+      style={{}}
     >
+      <div className="hero-bg" aria-hidden="true">
+        <video className="hero-video" autoPlay muted loop playsInline>
+          <source src="/assets/FoodShare Platform.mp4" type="video/mp4" />
+        </video>
+        <div className="hero-overlay" />
+      </div>
       <div className="hero-content hero-top">
         <h1>
           Donate Food,
@@ -65,7 +66,6 @@ function About() {
     </section>
   );
 }
-
 
 /* ---------------- Features (How It Works) ---------------- */
 function Features() {
@@ -252,7 +252,6 @@ function SupportMission() {
   );
 }
 
-
 /* ---------------- CTA Section ---------------- */
 function CTA() {
   return (
@@ -333,6 +332,7 @@ function Navbar() {
   const hideNavbar =
     location.pathname === "/login" ||
     location.pathname === "/signup" ||
+    location.pathname === "/reset-password" ||
     location.pathname === "/admin-login" ||
     location.pathname === "/admin" ||
     location.pathname === "/donor-dashboard" ||
@@ -391,6 +391,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route
           path="/admin"
