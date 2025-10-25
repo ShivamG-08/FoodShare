@@ -1,6 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
+const fs = require("fs");
 require("dotenv").config();
 
 // Import routes
@@ -16,6 +18,14 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors());
+
+// Ensure uploads directories exist and serve statically
+const uploadsDir = path.join(__dirname, "uploads");
+const avatarsDir = path.join(uploadsDir, "avatars");
+try {
+  fs.mkdirSync(avatarsDir, { recursive: true });
+} catch (_) {}
+app.use("/uploads", express.static(uploadsDir));
 
 // Routes
 app.use("/auth", authRoutes);

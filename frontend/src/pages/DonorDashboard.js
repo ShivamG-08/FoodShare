@@ -21,6 +21,7 @@ import MapSection from "../components/MapSection";
 import MapDistanceModal from "../components/MapDistanceModal";
 import { createDonation, getDonationsByUser } from "../services/donationApi";
 import { getNotifications, markNotificationRead } from "../services/notificationApi";
+import { getUser, uploadAvatar } from "../services/usersApi";
 
 const DonorDashboard = () => {
   const [activeTab, setActiveTab] = useState("currentDonations");
@@ -129,20 +130,20 @@ const DonorDashboard = () => {
     if (activeTab === 'history') loadHistory();
   }, [activeTab, uid]);
 
-  const handleProfileImageChange = (e) => {
+  const handleProfileImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
+    if (!file || !uid) return;
+    try {
       setIsUploading(true);
-      // In a real app, you would upload the file to your server here
-      // For now, we'll just create a local URL for the image
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result;
-        setProfileImage(imageUrl);
-        try { localStorage.setItem(profileKey, imageUrl); } catch (_) {}
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+      const res = await uploadAvatar(uid, file);
+      const url = res?.profileImageUrl || '';
+      if (url) {
+        setProfileImage(url);
+        try { localStorage.setItem(profileKey, url); } catch (_) {}
+      }
+    } catch (_) {
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -230,6 +231,20 @@ const DonorDashboard = () => {
     
     prefetch();
   }, [uid, isDonor]);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        if (!uid) return;
+        const u = await getUser(uid);
+        if (u && u.profileImageUrl) {
+          setProfileImage(u.profileImageUrl);
+          try { localStorage.setItem(profileKey, u.profileImageUrl); } catch (_) {}
+        }
+      } catch (_) {}
+    };
+    loadUser();
+  }, [uid]);
 
   useEffect(() => {
     const warmupPrediction = async () => {
@@ -814,7 +829,7 @@ const DonorDashboard = () => {
             <h2>Connections</h2>
             <div className="card-grid">
               {notifications
-                .filter((n) => n.type === 'donation_accepted')
+                .filter((n) => n.type === 'donation_accepted' || n.type === 'donation_received')
                 .map((n) => {
                   const r = n.meta?.receiver || {};
                   const d = n.meta?.donation || {};
@@ -825,18 +840,26 @@ const DonorDashboard = () => {
                       {r.email && <p>Email: {r.email}</p>}
                       {r.location && <p>Receiver Location: {r.location}</p>}
                       <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e5e7eb' }}>
-                        <div><strong>Food:</strong> {d.food || n.meta?.food || 'N/A'}</div>
-                        {d.quantity && <div><strong>Quantity:</strong> {d.quantity}</div>}
-                        {(d.location || n.meta?.pickup) && (
-                          <div><strong>Pickup:</strong> {d.location || n.meta?.pickup}</div>
+                        <div><strong>Food:</strong> {
+                          d.food || n.meta?.food || d.foodName || n.meta?.foodName || d.item || n.meta?.item || 'N/A'
+                        }</div>
+                        {(d.quantity || n.meta?.quantity || d.qty || n.meta?.qty) && (
+                          <div><strong>Quantity:</strong> {d.quantity || n.meta?.quantity || d.qty || n.meta?.qty}</div>
                         )}
-                        <div><strong>Accepted at:</strong> {new Date(n.createdAt || d.createdAt || Date.now()).toLocaleString()}</div>
+                        {(d.location || n.meta?.location || n.meta?.pickup) && (
+                          <div><strong>Pickup:</strong> {d.location || n.meta?.location || n.meta?.pickup}</div>
+                        )}
+                        {n.type === 'donation_received' ? (
+                          <div><strong>Received at:</strong> {new Date(n.createdAt || d.updatedAt || Date.now()).toLocaleString()}</div>
+                        ) : (
+                          <div><strong>Accepted at:</strong> {new Date(n.createdAt || d.createdAt || Date.now()).toLocaleString()}</div>
+                        )}
                       </div>
                     </div>
                   );
                 })}
-              {notifications.filter((n) => n.type === 'donation_accepted').length === 0 && (
-                <div className="card"><p>No connections yet. When a receiver accepts your donation, they will appear here.</p></div>
+              {notifications.filter((n) => n.type === 'donation_accepted' || n.type === 'donation_received').length === 0 && (
+                <div className="card"><p>No connections yet. When a receiver accepts or receives your donation, they will appear here.</p></div>
               )}
             </div>
           </div>

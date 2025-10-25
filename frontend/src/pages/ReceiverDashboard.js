@@ -16,6 +16,7 @@ import './ReceiverDashboard.css';
 import { getAvailableDonations, acceptDonation as acceptDonationApi, markReceived as markReceivedApi } from '../services/donationApi';
 import MapSection from '../components/MapSection';
 import MapDistanceModal from '../components/MapDistanceModal';
+import { getUser, uploadAvatar } from '../services/usersApi';
 
 const ReceiverDashboard = () => {
   const userName = (typeof window !== 'undefined' && localStorage.getItem('userName')) || (typeof window !== 'undefined' && localStorage.getItem('userEmail')) || 'Receiver';
@@ -64,25 +65,23 @@ const ReceiverDashboard = () => {
     } catch (_) {}
   }, [theme]);
 
-  const handleProfileImageChange = (e) => {
+  const handleProfileImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
+    const uid = (typeof window !== 'undefined' && localStorage.getItem('userId')) || '';
+    const role = (typeof window !== 'undefined' && localStorage.getItem('userRole')) || 'receiver';
+    const key = uid ? `profileImage:${role}:${uid}` : 'profileImage:guest';
+    if (!file || !uid) return;
+    try {
       setIsUploading(true);
-      // In a real app, you would upload the file to your server here
-      // For now, we'll just create a local URL for the image
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result;
-        setProfileImage(imageUrl);
-        try {
-          const role = localStorage.getItem('userRole') || 'receiver';
-          const uid = localStorage.getItem('userId') || '';
-          const key = uid ? `profileImage:${role}:${uid}` : 'profileImage:guest';
-          localStorage.setItem(key, imageUrl);
-        } catch (_) {}
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+      const res = await uploadAvatar(uid, file);
+      const url = res?.profileImageUrl || '';
+      if (url) {
+        setProfileImage(url);
+        try { localStorage.setItem(key, url); } catch (_) {}
+      }
+    } catch (_) {
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -135,6 +134,23 @@ const ReceiverDashboard = () => {
     } catch (_) {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [receiverId]);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const uid = (typeof window !== 'undefined' && localStorage.getItem('userId')) || '';
+        const role = (typeof window !== 'undefined' && localStorage.getItem('userRole')) || 'receiver';
+        const key = uid ? `profileImage:${role}:${uid}` : 'profileImage:guest';
+        if (!uid) return;
+        const u = await getUser(uid);
+        if (u && u.profileImageUrl) {
+          setProfileImage(u.profileImageUrl);
+          try { localStorage.setItem(key, u.profileImageUrl); } catch (_) {}
+        }
+      } catch (_) {}
+    };
+    loadUser();
+  }, []);
 
   const saveStoredLocation = (value) => {
     if (!receiverId || !locKey || !consentKey) return;
@@ -220,8 +236,8 @@ const ReceiverDashboard = () => {
         return;
       }
       await markReceivedApi(donationId, receiverId);
-      // Remove from accepted list locally
-      setAcceptedDonations((prev) => prev.filter((a) => a.id !== donationId));
+      // Mark as received locally (keep in Connections)
+      setAcceptedDonations((prev) => prev.map((a) => a.id === donationId ? { ...a, receivedAt: new Date() } : a));
       // Refresh available list (in case statuses changed)
       const data = await getAvailableDonations();
       setAvailable(Array.isArray(data) ? data : []);
@@ -379,6 +395,90 @@ const ReceiverDashboard = () => {
                 <li>Enable push alerts in Settings to get notified instantly.</li>
                 <li>Use the Map tab to plan the quickest pickup route.</li>
               </ul>
+            </div>
+          </div>
+        );
+      case 'profile':
+        return (
+          <div className="dashboard-content">
+            <h2>Profile</h2>
+            <div className="profile-section" style={{ display: 'flex', gap: '2rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                <div style={{
+                  width: '120px',
+                  height: '120px',
+                  borderRadius: '50%',
+                  backgroundColor: '#e5e7eb',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  border: '3px solid #fff',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                }}>
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      alt="Profile"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '3rem',
+                      color: '#9ca3af'
+                    }}>
+                      <FaUser />
+                    </div>
+                  )}
+                  <label
+                    htmlFor="profile-upload"
+                    style={{
+                      position: 'absolute',
+                      bottom: '0',
+                      right: '0',
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '36px',
+                      height: '36px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                    }}
+                    title="Change profile picture"
+                  >
+                    <FaCog size={16} />
+                    <input
+                      id="profile-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfileImageChange}
+                      style={{ display: 'none' }}
+                      disabled={isUploading}
+                    />
+                  </label>
+                </div>
+                <h3 style={{ margin: '0', color: '#1f2937' }}>{userName}</h3>
+                <p style={{ margin: '0', color: '#6b7280', fontSize: '0.9rem' }}>{userEmail || 'N/A'}</p>
+              </div>
+
+              <div style={{ flex: 1 }}>
+                <div className="card-grid">
+                  <div className="card">
+                    <h3>Name</h3>
+                    <p>{userName}</p>
+                  </div>
+                  <div className="card">
+                    <h3>Email</h3>
+                    <p>{userEmail || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -577,16 +677,20 @@ const ReceiverDashboard = () => {
                     <p style={{ marginTop: 4, color: '#6b7280' }}>Donor</p>
                     {donor.email && <p>Email: {donor.email}</p>}
                     <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e5e7eb' }}>
-                      <div><strong>Food:</strong> {m.food || 'N/A'}</div>
-                      {m.quantity && <div><strong>Quantity:</strong> {m.quantity}</div>}
-                      {m.location && <div><strong>Pickup:</strong> {m.location}</div>}
-                      <div><strong>Accepted at:</strong> {new Date(a.at).toLocaleString()}</div>
+                      <div><strong>Food:</strong> {m.food || m.foodName || m.item || 'N/A'}</div>
+                      {(m.quantity || m.qty) && <div><strong>Quantity:</strong> {m.quantity || m.qty}</div>}
+                      {(m.location || m.pickup) && <div><strong>Pickup:</strong> {m.location || m.pickup}</div>}
+                      {a.receivedAt ? (
+                        <div><strong>Received at:</strong> {new Date(a.receivedAt).toLocaleString()}</div>
+                      ) : (
+                        <div><strong>Accepted at:</strong> {new Date(a.at).toLocaleString()}</div>
+                      )}
                     </div>
                   </div>
                 );
               })}
               {acceptedDonations.length === 0 && (
-                <div className="card"><p>No connections yet. Accept a donation to see it here.</p></div>
+                <div className="card"><p>No connections yet. Accept a donation to see it here. Marking as received will keep the connection for your records.</p></div>
               )}
             </div>
           </div>
@@ -696,41 +800,60 @@ const ReceiverDashboard = () => {
             <div className="profile-dropdown" style={{ position: 'relative' }}>
               <div 
                 className="user-avatar"
-                onClick={() => setShowProfile(!showProfile)}
                 style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
                   gap: '8px', 
-                  cursor: 'pointer', 
                   padding: '8px 12px', 
                   borderRadius: '4px' 
                 }}
               >
-                {profileImage ? (
-                  <img 
-                    src={profileImage} 
-                    alt="Profile" 
-                    style={{ 
+                <div
+                  onClick={() => { const el = document.getElementById('nav-profile-upload'); if (el) el.click(); }}
+                  title="Change profile picture"
+                  style={{ cursor: 'pointer' }}
+                >
+                  {profileImage ? (
+                    <img 
+                      src={profileImage} 
+                      alt="Profile" 
+                      style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '50%', 
+                        objectFit: 'cover' 
+                      }} 
+                    />
+                  ) : (
+                    <div style={{ 
                       width: '32px', 
                       height: '32px', 
                       borderRadius: '50%', 
-                      objectFit: 'cover' 
-                    }} 
-                  />
-                ) : (
-                  <div style={{ 
-                    width: '32px', 
-                    height: '32px', 
-                    borderRadius: '50%', 
-                    backgroundColor: '#e5e7eb', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center' 
-                  }}>
-                    <FaUser style={{ color: '#4b5563' }} />
-                  </div>
-                )}
-                <span className="username" style={{ fontWeight: 500 }}>{userName}</span>
+                      backgroundColor: '#e5e7eb', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}>
+                      <FaUser style={{ color: '#4b5563' }} />
+                    </div>
+                  )}
+                </div>
+                <input
+                  id="nav-profile-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                  style={{ display: 'none' }}
+                  disabled={isUploading}
+                />
+                <span 
+                  className="username" 
+                  style={{ fontWeight: 500, cursor: 'pointer' }}
+                  onClick={() => setShowProfile(!showProfile)}
+                >
+                  {userName}
+                </span>
               </div>
 
               {showProfile && (
@@ -741,7 +864,7 @@ const ReceiverDashboard = () => {
                     right: 0,
                     top: '100%',
                     marginTop: '8px',
-                    width: '240px',
+                    width: '200px',
                     background: '#fff',
                     borderRadius: '8px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
@@ -750,132 +873,21 @@ const ReceiverDashboard = () => {
                   }}
                 >
                   <div 
-                    className="profile-header"
-                    style={{
-                      padding: '16px',
-                      textAlign: 'center',
-                      borderBottom: '1px solid #f3f4f6'
-                    }}
+                    className="profile-dropdown-item" 
+                    onClick={() => { setActiveTab('profile'); setShowProfile(false); }}
+                    style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', transition: 'background-color 0.2s', color: '#1f2937', borderBottom: '1px solid #f3f4f6' }}
                   >
-                    <div style={{ position: 'relative', display: 'inline-block', marginBottom: '12px' }}>
-                      {profileImage ? (
-                        <img 
-                          src={profileImage} 
-                          alt="Profile" 
-                          style={{ 
-                            width: '80px', 
-                            height: '80px', 
-                            borderRadius: '50%', 
-                            objectFit: 'cover',
-                            border: '3px solid #fff',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                          }} 
-                        />
-                      ) : (
-                        <div style={{ 
-                          width: '80px', 
-                          height: '80px', 
-                          borderRadius: '50%', 
-                          backgroundColor: '#e5e7eb', 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center',
-                          margin: '0 auto',
-                          border: '3px solid #fff',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                        }}>
-                          <FaUser size={32} style={{ color: '#6b7280' }} />
-                        </div>
-                      )}
-                      <label 
-                        htmlFor="profile-upload"
-                        style={{
-                          position: 'absolute',
-                          bottom: '0',
-                          right: '0',
-                          backgroundColor: '#3b82f6',
-                          color: 'white',
-                          borderRadius: '50%',
-                          width: '28px',
-                          height: '28px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                        }}
-                      >
-                        {isUploading ? (
-                          <div className="spinner" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderRadius: '50%', borderTopColor: '#fff', animation: 'spin 1s ease-in-out infinite' }}></div>
-                        ) : (
-                          <FaUser size={12} />
-                        )}
-                        <input
-                          id="profile-upload"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleProfileImageChange}
-                          style={{ display: 'none' }}
-                          disabled={isUploading}
-                        />
-                      </label>
-                    </div>
-                    <h4 style={{ margin: '8px 0 4px', color: '#111827' }}>{userName}</h4>
-                    <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>{userEmail || 'No email'}</p>
-                    <div style={{ 
-                      display: 'inline-block',
-                      marginTop: '8px',
-                      padding: '4px 8px',
-                      backgroundColor: '#e0f2fe',
-                      color: '#0369a1',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 500
-                    }}>
-                      {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-                    </div>
+                    <FaUser size={16} style={{ color: '#6b7280' }} />
+                    <span>Profile</span>
                   </div>
-                  <div style={{ padding: '8px 0' }}>
-                    <div 
-                      className="profile-dropdown-item"
-                      onClick={() => {
-                        setActiveTab('profile');
-                        setShowProfile(false);
-                      }}
-                      style={{
-                        padding: '12px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s',
-                        color: '#1f2937',
-                        borderBottom: '1px solid #f3f4f6'
-                      }}
-                    >
-                      <FaUser size={16} style={{ color: '#6b7280' }} />
-                      <span>My Profile</span>
-                    </div>
-                    <div 
-                      className="profile-dropdown-item"
-                      onClick={() => {
-                        setActiveTab('settings');
-                        setShowProfile(false);
-                      }}
-                      style={{
-                        padding: '12px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s',
-                        color: '#1f2937',
-                        borderBottom: '1px solid #f3f4f6'
-                      }}
-                    >
-                      <FaCog size={16} style={{ color: '#6b7280' }} />
-                      <span>Settings</span>
-                    </div>
+                  <div 
+                    className="profile-dropdown-item"
+                    onClick={() => { setActiveTab('settings'); setShowProfile(false); }}
+                    style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', transition: 'background-color 0.2s', color: '#1f2937', borderBottom: '1px solid #f3f4f6' }}
+                  >
+                    <FaCog size={16} style={{ color: '#6b7280' }} />
+                    <span>Settings</span>
+                  </div>
                     <div 
                       className="profile-dropdown-item"
                       onClick={handleLogout}
@@ -893,7 +905,6 @@ const ReceiverDashboard = () => {
                       <span>Logout</span>
                     </div>
                   </div>
-                </div>
               )}
             </div>
           </div>
