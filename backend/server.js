@@ -24,6 +24,13 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/prediction", predictionRoutes);
 app.use("/api/users", usersRoutes);
 
+// Debug: Log registered routes
+donationRoutes.stack.forEach((r) => {
+  if (r.route && r.route.path) {
+    console.log(`Registered route: ${r.route.path} (${Object.keys(r.route.methods).join(', ')})`);
+  }
+});
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });

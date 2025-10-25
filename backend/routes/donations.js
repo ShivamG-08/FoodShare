@@ -5,6 +5,11 @@ const User = require("../models/User");
 
 const router = express.Router();
 
+// Test route
+router.get('/test', (req, res) => {
+  res.json({ message: 'Donations router is working!' });
+});
+
 router.post("/", async (req, res) => {
   try {
     const { userId, food, quantity, location, notes } = req.body;
@@ -31,6 +36,21 @@ router.get("/", async (req, res) => {
   } catch (err) {
     console.error("List donations error:", err);
     return res.status(500).json({ message: "Error fetching donations" });
+  }
+});
+
+// Get available donations for receivers (pending status)
+// Get all donations (admin only)
+router.get("/all", async (req, res) => {
+  try {
+    const donations = await Donation.find()
+      .sort({ createdAt: -1 })
+      .populate({ path: "userId", select: "name email" })
+      .populate({ path: "assignedTo", select: "name email" });
+    return res.json(donations);
+  } catch (err) {
+    console.error("Get all donations error:", err);
+    return res.status(500).json({ message: "Error fetching all donations" });
   }
 });
 

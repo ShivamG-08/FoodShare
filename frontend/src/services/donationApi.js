@@ -39,4 +39,16 @@ export async function markReceived(donationId, receiverId) {
   return data;
 }
 
-export default { createDonation, getDonationsByUser, getAvailableDonations, acceptDonation, markReceived };
+export async function getAllDonations() {
+  const { data } = await axios.get(`${BASE_URL}/api/donations/all`);
+  return data;
+}
+
+export default { 
+  createDonation, 
+  getDonationsByUser, 
+  getAvailableDonations, 
+  acceptDonation, 
+  markReceived, 
+  getAllDonations 
+};
