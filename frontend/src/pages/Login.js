@@ -1,13 +1,19 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import "./Login.css";
 
 function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotStatus, setForgotStatus] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const requiredRole = params.get("role"); // 'receiver' | 'donor' | null
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,7 +32,28 @@ function Login() {
       );
 
       if (response.data && response.data.role) {
+        // Enforce role if specified via query param BEFORE storing anything
+        if (requiredRole && response.data.role !== requiredRole) {
+          setError("Invalid credentials");
+          return; // Do not store or navigate
+        }
+
+        // Store after role check passes
         localStorage.setItem("userRole", response.data.role);
+        if (response.data.user) {
+          localStorage.setItem("userId", response.data.user.id);
+          localStorage.setItem("userEmail", response.data.user.email);
+          localStorage.setItem("userName", response.data.user.name || "");
+          // Persist profile image per-user so it's available across sessions and browsers
+          try {
+            const uid = response.data.user.id;
+            const role = response.data.role;
+            const key = uid ? `profileImage:${role}:${uid}` : 'profileImage:guest';
+            const url = response.data.user.profileImageUrl || '';
+            if (url) localStorage.setItem(key, url);
+          } catch (_) {}
+        }
+
         if (response.data.role === "donor") {
           navigate("/donor-dashboard");
         } else {
@@ -41,9 +68,33 @@ function Login() {
     }
   };
 
+  const handleForgot = async (e) => {
+    e.preventDefault();
+    setForgotStatus("");
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/auth/forgot-password",
+        { email: forgotEmail },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      setForgotStatus(
+        res.data?.message ? `${res.data.message}. Check console for dev reset link.` : "Request submitted."
+      );
+      console.log("Dev reset link:", res.data?.resetLink);
+    } catch (err) {
+      setForgotStatus(err.response?.data?.message || "Could not process request. Try again later.");
+    }
+  };
+
   return (
     <div className="login-container">
-      <h2>Login</h2>
+      <h2>
+        {requiredRole === "receiver"
+          ? "Receiver Login"
+          : requiredRole === "donor"
+          ? "Donor Login"
+          : "Login"}
+      </h2>
 
       {error && <div className="error-box">{error}</div>}
 
@@ -70,6 +121,33 @@ function Login() {
           {isLoading ? "Logging in..." : "Login"}
         </button>
       </form>
+
+      <div style={{ marginTop: 12 }}>
+        <button
+          type="button"
+          className="link-button"
+          onClick={() => setShowForgot((v) => !v)}
+          style={{ background: "none", border: "none", color: "#2563eb", cursor: "pointer", padding: 0 }}
+        >
+          {showForgot ? "Hide Forgot Password" : "Forgot password?"}
+        </button>
+      </div>
+
+      {showForgot && (
+        <div className="forgot-box" style={{ marginTop: 12 }}>
+          <form onSubmit={handleForgot}>
+            <input
+              type="email"
+              placeholder="Enter your registered email"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              required
+            />
+            <button type="submit">Send Reset Link</button>
+          </form>
+          {forgotStatus && <div className="info-box" style={{ marginTop: 8 }}>{forgotStatus}</div>}
+        </div>
+      )}
 
       <p>
         Don't have an account?{" "}

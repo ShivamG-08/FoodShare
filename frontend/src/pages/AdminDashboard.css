@@ -1,0 +1,56 @@
+:root{--bg:#f5f7fa;--panel:#ffffff;--text:#1f2937;--muted:#6b7280;--border:#e5e7eb;--primary:#2563eb;--green:#10b981;}
+
+.admin-container{display:flex;min-height:100vh;background:var(--bg);color:var(--text);font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;}
+.admin-sidebar{width:240px;background:#111827;color:#e5e7eb;position:sticky;top:0;height:100vh;padding:18px 14px;}
+.admin-brand{font-weight:700;font-size:1.1rem;margin-bottom:14px}
+.admin-sidebar nav{display:flex;flex-direction:column;gap:8px}
+.admin-sidebar nav button{display:flex;align-items:center;gap:10px;background:transparent;border:1px solid transparent;color:#e5e7eb;padding:10px 12px;border-radius:8px;cursor:pointer;text-align:left}
+.admin-sidebar nav button:hover{background:#1f2937}
+.admin-sidebar nav button.active{background:#374151}
+.admin-sidebar nav button svg{font-size:1rem}
+
+.admin-main{flex:1;padding:18px}
+.admin-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.admin-topbar .left h1{margin:0;font-size:1.25rem}
+.admin-topbar .right{display:flex;align-items:center;gap:10px}
+.search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);padding:8px 10px;border-radius:8px}
+.search input{border:none;outline:none}
+.bell{background:#fff;border:1px solid var(--border);padding:8px 10px;border-radius:8px;cursor:pointer}
+
+.ad-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:14px}
+.ad-stat{display:flex;gap:12px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.ad-stat-icon{display:grid;place-items:center;background:#eff6ff;color:#1d4ed8;width:42px;height:42px;border-radius:10px}
+.ad-stat-title{font-size:.9rem;color:#374151}
+.ad-stat-value{font-weight:800;font-size:1.4rem}
+.ad-stat-sub{color:var(--muted);font-size:.85rem}
+
+.ad-panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.panel-actions .btn{padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer}
+.panel-actions .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+.ad-table{width:100%;border-collapse:collapse}
+.ad-table thead th{font-size:.85rem;text-align:left;color:#374151;border-bottom:1px solid var(--border);padding:10px}
+.ad-table tbody td{border-bottom:1px solid var(--border);padding:10px;color:#374151}
+.row-actions .btn{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;margin-right:6px;cursor:pointer}
+.row-actions .btn.danger{background:#fee2e2;border-color:#fecaca;color:#b91c1c}
+
+.status{padding:4px 10px;border-radius:999px;font-size:.75rem;text-transform:capitalize}
+.status.available{background:#dcfce7;color:#065f46}
+.status.accepted{background:#e0e7ff;color:#3730a3}
+.status.completed{background:#e5e7eb;color:#374151}
+.status.active{background:#d1fae5;color:#065f46}
+.status.blocked{background:#fee2e2;color:#991b1b}
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:10px}
+.form-grid label{display:flex;flex-direction:column;gap:6px;color:#374151}
+.form-grid input,.form-grid select{padding:10px 12px;border:1px solid var(--border);border-radius:8px}
+.actions{margin-top:12px}
+.btn.primary{background:var(--primary);color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
+
+@media (max-width: 992px){.admin-sidebar{position:fixed;left:0;top:0;height:auto;width:100%;z-index:1000}.admin-main{margin-top:70px}}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:2000}
+.modal{width:min(520px,92vw);background:#fff;border-radius:10px;border:1px solid var(--border);box-shadow:0 10px 30px rgba(0,0,0,.15);padding:16px}
+.modal h3{margin:0 0 10px;color:var(--text)}

@@ -8,6 +8,7 @@ __pycache__/
 # Environment variables
 .env
 .env.local
+!frontend/.env
 
 # Build files
 build/
