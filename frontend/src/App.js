@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import DonorDashboard from "./pages/DonorDashboard";
 import ReceiverDashboard from "./pages/ReceiverDashboard";
 import ResetPassword from "./pages/ResetPassword";
+import StoryDetails from './pages/StoryDetails';
 import "./App.css";
 
 /* ---------------- Hero ---------------- */
@@ -130,6 +131,18 @@ function Features() {
           <div className="feature-icon">🤝</div>
           <h3>Connect</h3>
           <p>Get matched and coordinate food pickup or delivery.</p>
+          <button 
+            className="btn secondary" 
+            style={{ marginTop: '1rem', padding: '0.5rem 1.5rem', fontSize: '0.9rem' }}
+            onClick={() => {
+              const contactSection = document.getElementById('contact');
+              if (contactSection) {
+                contactSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
+            Contact Us
+          </button>
         </div>
         <div className="feature-card">
           <div className="feature-icon">🛡️</div>
@@ -193,9 +206,9 @@ function StoriesOfHope() {
                 meals to over 100 families in need last month. Your contributions
                 make stories like these possible.
               </p>
-              <a href="#read-more" className="read-more">
+              <Link to="/stories/bringing-smiles-to-families" className="read-more">
                 Read Full Story →
-              </a>
+              </Link>
             </div>
           </div>
           <div className="story-card">
@@ -206,9 +219,9 @@ function StoriesOfHope() {
                 meals to the homeless community. Every meal served is a step
                 toward ending hunger in our city.
               </p>
-              <a href="#read-more" className="read-more">
+              <Link to="/stories/community-coming-together" className="read-more">
                 Read Full Story →
-              </a>
+              </Link>
             </div>
             <div className="story-image">
               <img src="/community.jpg" alt="Community food distribution" />
@@ -406,6 +419,7 @@ function App() {
         <Route path="/donor-dashboard" element={<DonorDashboard />} />
         <Route path="/receiver-dashboard" element={<ReceiverDashboard />} />
         <Route path="*" element={<Navigate to="/" />} />
+        <Route path="/stories/:storyId" element={<StoryDetails />} />
       </Routes>
     </>
   );
