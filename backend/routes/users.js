@@ -10,7 +10,7 @@ router.get("/", async (req, res) => {
   try {
     const { role } = req.query;
     const filter = role ? { role } : {};
-    const users = await User.find(filter).select("name email role");
+    const users = await User.find(filter).select("name email role customId");
     res.status(200).json({ users });
   } catch (err) {
     res.status(500).json({ message: "Error fetching users" });

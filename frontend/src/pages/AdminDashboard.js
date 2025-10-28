@@ -77,6 +77,7 @@ export default function AdminDashboard() {
         const userList = Array.isArray(usersRes.data?.users) ? usersRes.data.users : [];
         const mappedUsers = userList.map((u) => ({
           id: u._id || u.id,
+          customId: u.customId || `ID-${u._id.toString().substring(0, 4)}`,
           name: u.name,
           role: u.role,
           email: u.email,
@@ -236,7 +237,7 @@ export default function AdminDashboard() {
               <h3>Recent Donations</h3>
               <table className="ad-table">
                 <thead>
-                  <tr><th>ID</th><th>Title</th><th>Donor</th><th>Qty</th><th>Status</th></tr>
+                  <tr><th>Food Name</th><th>Donor Name</th><th>Quantity</th><th>Status</th><th>Assigned To</th></tr>
                 </thead>
                 <tbody>
                   {loading ? (
@@ -285,18 +286,18 @@ export default function AdminDashboard() {
               <tbody>
                 {filteredUsers.map(u => (
                   <tr key={u.id}>
-                    <td>{u.id}</td>
+                    <td>{u.customId || `ID-${u.id.toString().substring(0, 4)}`}</td>
                     <td>{u.name}</td>
                     <td>{u.role}</td>
                     <td>{u.email}</td>
                     <td><span className={`status ${u.status}`}>{u.status}</span></td>
                     <td className="row-actions">
-                      <button className="btn sm">View</button>
-                      <button className="btn sm">Edit</button>
+                      {/* <button className="btn sm">View</button>
+                      <button className="btn sm">Edit</button> */}
                       <button className="btn sm danger">{u.status === 'blocked' ? 'Unblock' : 'Block'}</button>
                     </td>
                   </tr>
-                ))}
+                ))}..
               </tbody>
             </table>
           </section>
@@ -317,13 +318,13 @@ export default function AdminDashboard() {
               <tbody>
                 {filteredDonors.map(u => (
                   <tr key={u.id}>
-                    <td>{u.id}</td>
+                    <td>{u.customId || `ID-${u.id.toString().substring(0, 4)}`}</td>
                     <td>{u.name}</td>
                     <td>{u.email}</td>
                     <td><span className={`status ${u.status}`}>{u.status}</span></td>
                     <td className="row-actions">
-                      <button className="btn sm">View</button>
-                      <button className="btn sm">Edit</button>
+                      {/* <button className="btn sm">View</button>
+                      <button className="btn sm">Edit</button> */}
                       <button className="btn sm danger">{u.status === 'blocked' ? 'Unblock' : 'Block'}</button>
                     </td>
                   </tr>
@@ -348,13 +349,13 @@ export default function AdminDashboard() {
               <tbody>
                 {filteredReceivers.map(u => (
                   <tr key={u.id}>
-                    <td>{u.id}</td>
+                    <td>{u.customId || `ID-${u.id.toString().substring(0, 4)}`}</td>
                     <td>{u.name}</td>
                     <td>{u.email}</td>
                     <td><span className={`status ${u.status}`}>{u.status}</span></td>
                     <td className="row-actions">
-                      <button className="btn sm">View</button>
-                      <button className="btn sm">Edit</button>
+                      {/* <button className="btn sm">View</button>
+                      <button className="btn sm">Edit</button> */}
                       <button className="btn sm danger">{u.status === 'blocked' ? 'Unblock' : 'Block'}</button>
                     </td>
                   </tr>
