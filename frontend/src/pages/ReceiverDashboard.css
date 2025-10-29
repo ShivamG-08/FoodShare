@@ -359,7 +359,8 @@
 .donations-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
+  gap: 20px;
+  align-items: start;
 }
 
 .donation-card {
@@ -368,11 +369,12 @@
   border-radius: 10px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden; /* prevent any child from visually overflowing into adjacent cards */
 }
 
 .donation-card:hover {
-  transform: translateY(-3px);
   box-shadow: 0 6px 18px rgba(0,0,0,0.08);
 }
 
@@ -410,6 +412,25 @@
   margin: 10px 0 12px;
   color: #4b5563;
   font-size: 0.9rem;
+  align-items: start;
+  word-break: break-word;
+}
+
+/* Ensure inline rows within metadata wrap content (like location + Map button) */
+.donation-meta span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Keep action button inline within metadata row; avoid absolute/floating styles from globals */
+.donation-meta .btn {
+  position: static !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .donation-actions {
@@ -550,4 +571,10 @@
   .sidebar.show-mobile {
     transform: translateX(0);
   }
+}
+
+/* Light mode: subtle gradient for page background (keeps navbars/cards unchanged) */
+html:not(.dark) .main-content,
+html:not(.dark) .content-area {
+  background: linear-gradient(135deg, #ccfbf1 0%, #e0e7ff 100%);
 }

@@ -21,6 +21,13 @@ export async function getAvailableDonations() {
   return data;
 }
 
+export async function getReceiverConnections(receiverId) {
+  const { data } = await axios.get(`${BASE_URL}/api/donations/for-receiver`, {
+    params: { receiverId },
+  });
+  return data;
+}
+
 export async function acceptDonation(donationId, receiverId, receiverLocation) {
   const { data } = await axios.patch(
     `${BASE_URL}/api/donations/${donationId}/accept`,
@@ -39,6 +46,15 @@ export async function markReceived(donationId, receiverId) {
   return data;
 }
 
+export async function updateReceiverLocation(donationId, receiverId, receiverLocation) {
+  const { data } = await axios.patch(
+    `${BASE_URL}/api/donations/${donationId}/location`,
+    { receiverId, receiverLocation },
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+  return data;
+}
+
 export async function getAllDonations() {
   const { data } = await axios.get(`${BASE_URL}/api/donations/all`);
   return data;
@@ -50,5 +66,7 @@ export default {
   getAvailableDonations, 
   acceptDonation, 
   markReceived, 
-  getAllDonations 
+  getAllDonations,
+  getReceiverConnections,
+  updateReceiverLocation,
 };

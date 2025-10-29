@@ -52,21 +52,21 @@ const donorMapStyle = [
 ];
 
 const receiverMapStyle = [
-  { elementType: "geometry", stylers: [{ color: "#f3f4f6" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#6b7280" }] },
-  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#e5e7eb" }] },
-  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#d1fae5" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#d1d5db" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#93c5fd" }] },
+  { elementType: "geometry", stylers: [{ color: "#0b49c681" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#d71717ff" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#214282ff" }] },
+  { featureType: "poi", elementType: "geometry", stylers: [{ color: "#01a068ff" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#0a1b78ff" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#898e96ff" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#b3ae1dff" }] },
 ];
 
-const makeSvgPin = (hex = "#ef4444") => ({
+const makeSvgPin = (hex = "#0f0cc48e") => ({
   path: "M12 2C7.03 2 3 6.03 3 11c0 6.08 7.65 10.54 8 10.73.35-.19 8-4.65 8-10.73 0-4.97-4.03-9-9-9zm0 12.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z",
   fillColor: hex,
   fillOpacity: 1,
   strokeWeight: 1,
-  strokeColor: "#111827",
+  strokeColor: "#b57e0fff",
   scale: 1.6,
   anchor: { x: 12, y: 22 },
 });
@@ -85,6 +85,7 @@ const MapSection = ({
   const radiusCircleRef = useRef(null);
   const searchInputRef = useRef(null);
   const placeMarkerRef = useRef(null);
+  const customMarkersRef = useRef([]);
   const [radiusKm, setRadiusKm] = useState(initialRadiusKm);
   const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
@@ -107,8 +108,8 @@ const MapSection = ({
         });
         mapRef.current = map;
 
-        // Add provided markers with custom pins
-        markers.forEach((m) => {
+        // Add provided markers with custom pins (initial render)
+        customMarkersRef.current = (markers || []).map((m) => {
           const marker = new maps.Marker({
             position: m.position,
             map,
@@ -119,6 +120,7 @@ const MapSection = ({
             const info = new maps.InfoWindow({ content: `<div style='font-size:14px'>${m.label}</div>` });
             marker.addListener("click", () => info.open({ map, anchor: marker }));
           }
+          return marker;
         });
 
         // Try geolocate user and show a distinct pin + radius (only if explicitly enabled)
@@ -181,12 +183,88 @@ const MapSection = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey]);
 
+  // Re-render markers when `markers` prop changes
+  useEffect(() => {
+    const maps = window.google && window.google.maps;
+    if (!maps || !mapRef.current) return;
+    // Clear old markers
+    customMarkersRef.current.forEach((mk) => mk.setMap(null));
+    customMarkersRef.current = (markers || []).map((m) => {
+      const marker = new maps.Marker({
+        position: m.position,
+        map: mapRef.current,
+        title: m.label || "",
+        icon: makeSvgPin(m.color || (role === "receiver" ? "#10b981" : "#f59e0b")),
+      });
+      if (m.label) {
+        const info = new maps.InfoWindow({ content: `<div style='font-size:14px'>${m.label}</div>` });
+        marker.addListener("click", () => info.open({ map: mapRef.current, anchor: marker }));
+      }
+      return marker;
+    });
+  }, [markers, role]);
+
   // Update radius in circle when slider changes
   useEffect(() => {
     if (radiusCircleRef.current) {
       radiusCircleRef.current.setRadius(radiusKm * 1000);
     }
   }, [radiusKm]);
+
+  const handleGetMyLocation = () => {
+    try {
+      if (!mapRef.current) return;
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          const maps = window.google && window.google.maps;
+          mapRef.current.setCenter(p);
+          mapRef.current.setZoom(14);
+
+          if (maps) {
+            if (userMarkerRef.current) {
+              userMarkerRef.current.setPosition(p);
+              userMarkerRef.current.setMap(mapRef.current);
+            } else {
+              userMarkerRef.current = new maps.Marker({
+                position: p,
+                map: mapRef.current,
+                title: "You are here",
+                icon: makeSvgPin("#3b82f6"),
+                zIndex: 999,
+              });
+            }
+
+            if (radiusCircleRef.current) {
+              radiusCircleRef.current.setCenter(p);
+              radiusCircleRef.current.setMap(mapRef.current);
+              radiusCircleRef.current.setRadius(radiusKm * 1000);
+            } else {
+              radiusCircleRef.current = new maps.Circle({
+                strokeColor: "#3b82f6",
+                strokeOpacity: 0.6,
+                strokeWeight: 1,
+                fillColor: "#3b82f6",
+                fillOpacity: 0.12,
+                map: mapRef.current,
+                center: p,
+                radius: radiusKm * 1000,
+              });
+            }
+          }
+        },
+        (err) => {
+          alert(err?.message || "Unable to access your location.");
+        }
+      );
+    } catch (e) {
+      alert("An unexpected error occurred while fetching your location.");
+    }
+  };
 
   if (!apiKey) {
     return (
@@ -214,17 +292,11 @@ REACT_APP_GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_KEY
           />
           <button
             type="button"
-            onClick={() => {
-              if (!mapRef.current || !navigator.geolocation) return;
-              navigator.geolocation.getCurrentPosition((pos) => {
-                const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                mapRef.current.setCenter(p);
-                mapRef.current.setZoom(14);
-              });
-            }}
-            style={{ padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: 6, background: "#fff" }}
+            className="btn"
+            onClick={handleGetMyLocation}
+            title="Center map to your current location"
           >
-            Use my location
+            Get My Location
           </button>
           <label style={{ fontSize: 14 }}>Radius: {radiusKm} km</label>
           <input

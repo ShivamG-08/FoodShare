@@ -77,6 +77,34 @@ router.get("/available", async (_req, res) => {
   }
 });
 
+// Get donations assigned to a receiver (Connections)
+router.get("/for-receiver", async (req, res) => {
+  try {
+    const { receiverId } = req.query;
+    if (!receiverId) return res.status(400).json({ message: "receiverId is required" });
+    const donations = await Donation.find({ assignedTo: receiverId })
+      .sort({ updatedAt: -1 })
+      .populate({ path: "userId", select: "name email" });
+    return res.json(
+      donations.map((d) => ({
+        _id: d._id,
+        food: d.food,
+        quantity: d.quantity,
+        location: d.location,
+        status: d.status,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+        receiverLocation: d.receiverLocation || null,
+        receiverLocationUpdatedAt: d.receiverLocationUpdatedAt || null,
+        donor: d.userId ? { name: d.userId.name, email: d.userId.email, id: d.userId._id } : null,
+      }))
+    );
+  } catch (err) {
+    console.error("Receiver donations error:", err);
+    return res.status(500).json({ message: "Error fetching receiver donations" });
+  }
+});
+
 // Accept a donation (assign to a receiver)
 router.patch("/:id/accept", async (req, res) => {
   try {
@@ -84,9 +112,14 @@ router.patch("/:id/accept", async (req, res) => {
     const { receiverId, receiverLocation } = req.body;
     if (!receiverId) return res.status(400).json({ message: "receiverId is required" });
 
+    const updateSet = { status: "assigned", assignedTo: receiverId };
+    if (receiverLocation) {
+      updateSet.receiverLocation = receiverLocation;
+      updateSet.receiverLocationUpdatedAt = new Date();
+    }
     const updated = await Donation.findOneAndUpdate(
       { _id: id, status: "pending" },
-      { $set: { status: "assigned", assignedTo: receiverId } },
+      { $set: updateSet },
       { new: true }
     );
 
@@ -118,6 +151,27 @@ router.patch("/:id/accept", async (req, res) => {
   } catch (err) {
     console.error("Accept donation error:", err);
     return res.status(500).json({ message: "Error accepting donation" });
+  }
+});
+
+// Update receiver live location for a specific donation
+router.patch("/:id/location", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { receiverId, receiverLocation } = req.body;
+    if (!receiverId || !receiverLocation) return res.status(400).json({ message: "receiverId and receiverLocation are required" });
+
+    // Only allow update if this receiver is assigned on this donation
+    const updated = await Donation.findOneAndUpdate(
+      { _id: id, assignedTo: receiverId },
+      { $set: { receiverLocation, receiverLocationUpdatedAt: new Date() } },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ message: "Donation not found or not assigned to this receiver" });
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("Update receiver location error:", err);
+    return res.status(500).json({ message: "Error updating receiver location" });
   }
 });
 

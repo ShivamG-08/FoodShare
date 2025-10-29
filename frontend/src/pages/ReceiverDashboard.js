@@ -13,7 +13,13 @@ import {
   FaMapMarkedAlt
 } from 'react-icons/fa';
 import './ReceiverDashboard.css';
-import { getAvailableDonations, acceptDonation as acceptDonationApi, markReceived as markReceivedApi } from '../services/donationApi';
+import { 
+  getAvailableDonations, 
+  acceptDonation as acceptDonationApi, 
+  markReceived as markReceivedApi, 
+  getReceiverConnections,
+  updateReceiverLocation 
+} from '../services/donationApi';
 import MapSection from '../components/MapSection';
 import MapDistanceModal from '../components/MapDistanceModal';
 import { getUser, uploadAvatar } from '../services/usersApi';
@@ -89,7 +95,10 @@ const ReceiverDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [acceptedDonations, setAcceptedDonations] = useState([]); // {id, at: Date}
+  const [acceptedDonations, setAcceptedDonations] = useState([]); // local cache for immediate UX
+  const [connections, setConnections] = useState([]); // backend connections
+  const [loadingConnections, setLoadingConnections] = useState(false);
+  const [errorConnections, setErrorConnections] = useState('');
 
   // Browse: filters and data
   const [search, setSearch] = useState('');
@@ -217,6 +226,71 @@ const ReceiverDashboard = () => {
     }
   }, [activeTab]);
 
+  // Load connections from backend when opening the Connections tab
+  useEffect(() => {
+    const loadConnections = async () => {
+      try {
+        setErrorConnections('');
+        setLoadingConnections(true);
+        const receiverId = (typeof window !== 'undefined' && localStorage.getItem('userId')) || '';
+        if (!receiverId) {
+          setConnections([]);
+          return;
+        }
+        const data = await getReceiverConnections(receiverId);
+        setConnections(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.error(e);
+        setErrorConnections('Failed to load connections');
+      } finally {
+        setLoadingConnections(false);
+      }
+    };
+    if (activeTab === 'connections') loadConnections();
+  }, [activeTab]);
+
+  // Live location updates while viewing Connections
+  useEffect(() => {
+    let watchId = null;
+    let intervalId = null;
+    const canUpdate = activeTab === 'connections' && connections.length > 0;
+    const receiverIdLocal = (typeof window !== 'undefined' && localStorage.getItem('userId')) || '';
+    if (!canUpdate || !receiverIdLocal) return;
+
+    if (!navigator.geolocation) return;
+
+    // Send an update for current coords to all active connections
+    const sendUpdate = (coords) => {
+      const loc = `${coords.latitude},${coords.longitude}`;
+      const active = connections.filter(c => c.status !== 'completed' && c._id);
+      active.forEach((c) => {
+        updateReceiverLocation(c._id, receiverIdLocal, loc).catch(() => {});
+      });
+    };
+
+    // Start watchPosition for quick reaction
+    try {
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => sendUpdate(pos.coords),
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+      );
+    } catch (_) {}
+
+    // Also send periodic updates as a fallback
+    intervalId = setInterval(() => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => sendUpdate(pos.coords),
+        () => {}
+      );
+    }, 15000);
+
+    return () => {
+      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [activeTab, connections]);
+
   const filtered = available
     .filter(d => {
       // Text search only; show all donations to all receivers
@@ -241,6 +315,11 @@ const ReceiverDashboard = () => {
       // Refresh available list (in case statuses changed)
       const data = await getAvailableDonations();
       setAvailable(Array.isArray(data) ? data : []);
+      // Refresh backend connections list
+      try {
+        const conns = await getReceiverConnections(receiverId);
+        setConnections(Array.isArray(conns) ? conns : []);
+      } catch (_) {}
       alert('Marked as received. Donor will be notified.');
     } catch (e) {
       console.error(e);
@@ -262,6 +341,11 @@ const ReceiverDashboard = () => {
         if (prev.some((a) => a.id === donation.id)) return prev;
         return [...prev, { id: donation.id, at: new Date(), meta: donation }];
       });
+      // Refresh backend connections list
+      try {
+        const conns = await getReceiverConnections(receiverId);
+        setConnections(Array.isArray(conns) ? conns : []);
+      } catch (_) {}
       alert('Accepted. Donor notified.');
       // Refresh available list
       const data = await getAvailableDonations();
@@ -668,29 +752,27 @@ const ReceiverDashboard = () => {
           <div className="dashboard-content">
             <h2>Connections</h2>
             <div className="card-grid">
-              {acceptedDonations.map((a) => {
-                const m = a.meta || {};
-                const donor = m.donor || {};
+              {loadingConnections && (<div className="card"><p>Loading...</p></div>)}
+              {errorConnections && (<div className="card"><p style={{ color: '#b91c1c' }}>{errorConnections}</p></div>)}
+              {!loadingConnections && !errorConnections && connections.map((c) => {
+                const donor = c.donor || {};
                 return (
-                  <div key={a.id} className="card">
+                  <div key={c._id} className="card">
                     <h4 style={{ marginTop: 0 }}>{donor.name || 'Donor'}</h4>
                     <p style={{ marginTop: 4, color: '#6b7280' }}>Donor</p>
                     {donor.email && <p>Email: {donor.email}</p>}
                     <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e5e7eb' }}>
-                      <div><strong>Food:</strong> {m.food || m.foodName || m.item || 'N/A'}</div>
-                      {(m.quantity || m.qty) && <div><strong>Quantity:</strong> {m.quantity || m.qty}</div>}
-                      {(m.location || m.pickup) && <div><strong>Pickup:</strong> {m.location || m.pickup}</div>}
-                      {a.receivedAt ? (
-                        <div><strong>Received at:</strong> {new Date(a.receivedAt).toLocaleString()}</div>
-                      ) : (
-                        <div><strong>Accepted at:</strong> {new Date(a.at).toLocaleString()}</div>
-                      )}
+                      <div><strong>Food:</strong> {c.food || 'N/A'}</div>
+                      {c.quantity && <div><strong>Quantity:</strong> {c.quantity}</div>}
+                      {c.location && <div><strong>Pickup:</strong> {c.location}</div>}
+                      <div><strong>Status:</strong> {c.status || 'assigned'}</div>
+                      <div><strong>Updated at:</strong> {new Date(c.updatedAt || c.createdAt).toLocaleString()}</div>
                     </div>
                   </div>
                 );
               })}
-              {acceptedDonations.length === 0 && (
-                <div className="card"><p>No connections yet. Accept a donation to see it here. Marking as received will keep the connection for your records.</p></div>
+              {!loadingConnections && !errorConnections && connections.length === 0 && (
+                <div className="card"><p>No connections yet. Accept a donation to see it here.</p></div>
               )}
             </div>
           </div>

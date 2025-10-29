@@ -252,6 +252,12 @@
   border: 1px solid #fdcb6e;
 }
 
+/* Light mode: subtle gradient for page background (keeps navbars/cards unchanged) */
+html:not(.dark) .main-section,
+html:not(.dark) .content-area {
+  background: linear-gradient(135deg, #ecfdf5 0%, #fff7ed 100%);
+}
+
 /* Form styles for donation form */
 .form-grid {
   display: flex;
@@ -565,4 +571,12 @@
   .result-icon {
     font-size: 36px;
   }
+}
+
+.dashboard-content {
+  background: white;
+}
+
+.card {
+  background: white;
 }

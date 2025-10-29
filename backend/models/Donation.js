@@ -9,6 +9,8 @@ const DonationSchema = new mongoose.Schema(
     notes: { type: String },
     status: { type: String, enum: ["pending", "assigned", "picked_up", "completed"], default: "pending" },
     assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    receiverLocation: { type: String, default: null }, // "lat,lng"
+    receiverLocationUpdatedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

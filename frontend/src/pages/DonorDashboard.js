@@ -24,7 +24,8 @@ import { getNotifications, markNotificationRead } from "../services/notification
 import { getUser, uploadAvatar } from "../services/usersApi";
 
 const DonorDashboard = () => {
-  const [activeTab, setActiveTab] = useState("currentDonations");
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [liveMarkers, setLiveMarkers] = useState([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
   // Determine donor login state
@@ -154,6 +155,26 @@ const DonorDashboard = () => {
     setMapOrigin(receiverAddr);
     setMapDestination(donorAddress);
     setMapOpen(true);
+  };
+
+  const useCurrentPickupLocation = () => {
+    try {
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setLocation(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+        },
+        (err) => {
+          alert(err?.message || "Unable to access your location.");
+        }
+      );
+    } catch (e) {
+      alert("An unexpected error occurred while fetching your location.");
+    }
   };
 
   const toggleNotifications = async () => {
@@ -664,6 +685,14 @@ const DonorDashboard = () => {
                     <button
                       type="button"
                       className="btn"
+                      onClick={useCurrentPickupLocation}
+                      title="Use your current location for pickup"
+                    >
+                      Use Current Location
+                    </button>
+                    <button
+                      type="button"
+                      className="btn"
                       onClick={() => openMapForLocation(location)}
                       disabled={!location}
                       title="Show distance from receiver to this pickup"
@@ -872,26 +901,7 @@ const DonorDashboard = () => {
               title="Donor Map"
               role="donor"
               initialRadiusKm={8}
-              markers={[
-                {
-                  id: 1,
-                  position: { lat: 19.076, lng: 72.8777 },
-                  label: "You (donor base)",
-                  color: "#f59e0b",
-                },
-                {
-                  id: 2,
-                  position: { lat: 19.09, lng: 72.88 },
-                  label: "Receiver: Helping Hands",
-                  color: "#10b981",
-                },
-                {
-                  id: 3,
-                  position: { lat: 19.06, lng: 72.86 },
-                  label: "Receiver: Community Center",
-                  color: "#10b981",
-                },
-              ]}
+              markers={liveMarkers}
             />
           </div>
         );
