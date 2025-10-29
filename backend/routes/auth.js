@@ -40,6 +40,7 @@ router.post("/signup", async (req, res) => {
       message: "User registered successfully", 
       user: {
         id: savedUser._id,
+        customId: savedUser.customId,
         name: savedUser.name,
         email: savedUser.email,
         role: savedUser.role,
