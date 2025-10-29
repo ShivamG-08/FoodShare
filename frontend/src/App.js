@@ -206,20 +206,19 @@ function StoriesOfHope() {
                 meals to over 100 families in need last month. Your contributions
                 make stories like these possible.
               </p>
-              <Link to="/stories/bringing-smiles-to-families" className="read-more">
+              <Link to="/stories/nourishing-mumbai-communities" className="read-more">
                 Read Full Story →
               </Link>
             </div>
           </div>
           <div className="story-card">
             <div className="story-content">
-              <h3>Community Coming Together</h3>
+              <h3>Rural Reach: Feeding Villages</h3>
               <p>
-                Local restaurants and volunteers joined hands to distribute 500+
-                meals to the homeless community. Every meal served is a step
-                toward ending hunger in our city.
+                Our Rural Reach Initiative provided meals to 2,000+ people across 15 villages in Uttar Pradesh, 
+                focusing on combating malnutrition through sustainable food distribution and local farmer support.
               </p>
-              <Link to="/stories/community-coming-together" className="read-more">
+              <Link to="/stories/rural-reach-initiative" className="read-more">
                 Read Full Story →
               </Link>
             </div>
