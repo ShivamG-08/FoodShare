@@ -5,6 +5,11 @@ const User = require("../models/User");
 
 const router = express.Router();
 
+// Test route
+router.get('/test', (req, res) => {
+  res.json({ message: 'Donations router is working!' });
+});
+
 router.post("/", async (req, res) => {
   try {
     const { userId, food, quantity, location, notes } = req.body;
@@ -35,6 +40,21 @@ router.get("/", async (req, res) => {
 });
 
 // Get available donations for receivers (pending status)
+// Get all donations (admin only)
+router.get("/all", async (req, res) => {
+  try {
+    const donations = await Donation.find()
+      .sort({ createdAt: -1 })
+      .populate({ path: "userId", select: "name email" })
+      .populate({ path: "assignedTo", select: "name email" });
+    return res.json(donations);
+  } catch (err) {
+    console.error("Get all donations error:", err);
+    return res.status(500).json({ message: "Error fetching all donations" });
+  }
+});
+
+// Get available donations for receivers (pending status)
 router.get("/available", async (_req, res) => {
   try {
     const donations = await Donation.find({ status: "pending" })
@@ -61,7 +81,7 @@ router.get("/available", async (_req, res) => {
 router.patch("/:id/accept", async (req, res) => {
   try {
     const { id } = req.params;
-    const { receiverId } = req.body;
+    const { receiverId, receiverLocation } = req.body;
     if (!receiverId) return res.status(400).json({ message: "receiverId is required" });
 
     const updated = await Donation.findOneAndUpdate(
@@ -82,7 +102,13 @@ router.patch("/:id/accept", async (req, res) => {
         type: "donation_accepted",
         title: "Donation accepted",
         message: `Your donation '${updated.food}' has been accepted by ${receiver?.name || 'a receiver'}.`,
-        meta: { donationId: updated._id, receiverId, receiver: receiver ? { id: receiver._id, name: receiver.name, email: receiver.email } : { id: receiverId } },
+        meta: {
+          donationId: updated._id,
+          receiverId,
+          receiver: receiver
+            ? { id: receiver._id, name: receiver.name, email: receiver.email, location: receiverLocation || undefined }
+            : { id: receiverId, location: receiverLocation || undefined }
+        },
       });
     } catch (e) {
       console.error("Create notification (accept) error:", e);

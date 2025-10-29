@@ -18,8 +18,10 @@ import {
 import "./DonorDashboard.css";
 import { predictFreshness } from "../services/predictionApi";
 import MapSection from "../components/MapSection";
+import MapDistanceModal from "../components/MapDistanceModal";
 import { createDonation, getDonationsByUser } from "../services/donationApi";
 import { getNotifications, markNotificationRead } from "../services/notificationApi";
+import { getUser, uploadAvatar } from "../services/usersApi";
 
 const DonorDashboard = () => {
   const [activeTab, setActiveTab] = useState("currentDonations");
@@ -49,35 +51,109 @@ const DonorDashboard = () => {
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
 
+  // Map modal state
+  const [mapOpen, setMapOpen] = useState(false);
+  const [mapOrigin, setMapOrigin] = useState("");
+  const [mapDestination, setMapDestination] = useState("");
+
   // Notifications state
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notifError, setNotifError] = useState("");
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+  // Mark all notifications as read (optimistic)
+  const handleMarkAllRead = async () => {
+    try {
+      const unreadIds = notifications.filter((n) => !n.read).map((n) => n._id);
+      if (unreadIds.length === 0) return;
+      // Optimistic state update so badge hides immediately
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      // Best-effort API updates; don't block UI
+      await Promise.all(
+        unreadIds.map((id) => markNotificationRead(id).catch(() => {}))
+      );
+    } catch (e) {
+      console.error('Mark all read error', e);
+    }
+  };
+
   // Donation history state
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
   const [donations, setDonations] = useState([]);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [profileImage, setProfileImage] = useState(localStorage.getItem('profileImage') || '');
-  const [isUploading, setIsUploading] = useState(false);
-
-  const handleProfileImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setIsUploading(true);
-      // In a real app, you would upload the file to your server here
-      // For now, we'll just create a local URL for the image
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result;
-        setProfileImage(imageUrl);
-        localStorage.setItem('profileImage', imageUrl); // Save to localStorage for persistence
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+  const profileKey = uid ? `profileImage:${role || 'donor'}:${uid}` : 'profileImage:guest';
+  const [profileImage, setProfileImage] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    // migrate old global key once
+    const old = localStorage.getItem('profileImage');
+    const existing = localStorage.getItem(profileKey);
+    if (!existing && old) {
+      try { localStorage.setItem(profileKey, old); } catch (_) {}
     }
+    return localStorage.getItem(profileKey) || '';
+  });
+  const [isUploading, setIsUploading] = useState(false);
+  const [settingsTab, setSettingsTab] = useState('account');
+  const [theme, setTheme] = useState(() => (typeof window !== 'undefined' && localStorage.getItem('theme')) || 'light');
+
+  // Apply theme to document root and persist (hook must be at component scope)
+  useEffect(() => {
+    try {
+      if (typeof document !== 'undefined') {
+        const root = document.documentElement;
+        if (theme === 'dark') root.classList.add('dark'); else root.classList.remove('dark');
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('theme', theme);
+      }
+    } catch (_) {}
+  }, [theme]);
+
+  // Load donor donation history when viewing History tab
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (!uid) return;
+      setHistoryError("");
+      setHistoryLoading(true);
+      try {
+        const data = await getDonationsByUser(uid);
+        setDonations(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.error(e);
+        setHistoryError('Failed to load history');
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+    if (activeTab === 'history') loadHistory();
+  }, [activeTab, uid]);
+
+  const handleProfileImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !uid) return;
+    try {
+      setIsUploading(true);
+      const res = await uploadAvatar(uid, file);
+      const url = res?.profileImageUrl || '';
+      if (url) {
+        setProfileImage(url);
+        try { localStorage.setItem(profileKey, url); } catch (_) {}
+      }
+    } catch (_) {
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Open map helper (donor wants to see distance from receiver to donor)
+  const openMapForLocation = (donorAddress) => {
+    const receiverAddr = window.prompt("Enter receiver location to see directions:");
+    if (!receiverAddr || !donorAddress) return;
+    setMapOrigin(receiverAddr);
+    setMapDestination(donorAddress);
+    setMapOpen(true);
   };
 
   const toggleNotifications = async () => {
@@ -95,6 +171,16 @@ const DonorDashboard = () => {
       setNotifError("Failed to load notifications");
     } finally {
       setShowNotifications(!showNotifications);
+    }
+  };
+
+  // Mark a notification as read (used by Notifications dropdown)
+  const handleMarkRead = async (id) => {
+    try {
+      await markNotificationRead(id);
+      setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, read: true } : n)));
+    } catch (e) {
+      console.error("Mark read error", e);
     }
   };
 
@@ -145,6 +231,20 @@ const DonorDashboard = () => {
     
     prefetch();
   }, [uid, isDonor]);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        if (!uid) return;
+        const u = await getUser(uid);
+        if (u && u.profileImageUrl) {
+          setProfileImage(u.profileImageUrl);
+          try { localStorage.setItem(profileKey, u.profileImageUrl); } catch (_) {}
+        }
+      } catch (_) {}
+    };
+    loadUser();
+  }, [uid]);
 
   useEffect(() => {
     const warmupPrediction = async () => {
@@ -384,42 +484,97 @@ const DonorDashboard = () => {
                     <h3>Total Donations</h3>
                     <p>15</p>
                   </div>
-                </div>
-              </div>
             </div>
+          </div>
+          </div>
+        </div>
+        );
+      case "history":
+        return (
+          <div className="dashboard-content">
+            <h2>Donation History</h2>
+            {historyLoading && <div className="card"><p>Loading...</p></div>}
+            {historyError && <div className="card"><p style={{ color: '#b91c1c' }}>{historyError}</p></div>}
+            {!historyLoading && !historyError && (
+              <div className="card-grid">
+                {donations.map((d) => (
+                  <div key={d._id} className="card">
+                    <h4 style={{ marginTop: 0 }}>{d.food}</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 8 }}>
+                      <div><strong>Quantity:</strong> {d.quantity}</div>
+                      <div><strong>Status:</strong> {d.status || 'submitted'}</div>
+                      <div><strong>Location:</strong> {d.location}</div>
+                      <div><strong>Date:</strong> {new Date(d.createdAt).toLocaleString()}</div>
+                      {d.receiver && (
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <strong>Receiver:</strong> {d.receiver.name || 'N/A'}{d.receiver.email ? ` (${d.receiver.email})` : ''}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {donations.length === 0 && (
+                  <div className="card"><p>No past donations yet.</p></div>
+                )}
+              </div>
+            )}
           </div>
         );
       case "settings":
         return (
           <div className="dashboard-content">
             <h2>Settings</h2>
-            <div className="card">
-              <p>Manage your account preferences and update your details here.</p>
+            <div style={{ display: 'flex', gap: 12, margin: '12px 0', flexWrap: 'wrap' }}>
+              <button className={`btn ${settingsTab === 'account' ? 'primary' : ''}`} onClick={() => setSettingsTab('account')}>Account</button>
+              <button className={`btn ${settingsTab === 'notifications' ? 'primary' : ''}`} onClick={() => setSettingsTab('notifications')}>Notifications</button>
+              <button className={`btn ${settingsTab === 'preferences' ? 'primary' : ''}`} onClick={() => setSettingsTab('preferences')}>Preferences</button>
             </div>
-          </div>
-        );
-      case "history":
-        return (
-          <div className="dashboard-content">
-            <h2>Donation History</h2>
-            {historyLoading && <p>Loading...</p>}
-            {historyError && <div className="card error"><p>{historyError}</p></div>}
-            {!historyLoading && donations.length === 0 && !historyError && (
-              <div className="card"><p>No donations yet.</p></div>
-            )}
-            <div className="card-grid">
-              {donations.map((d) => (
-                <div key={d._id} className="card">
-                  <h4>🍽️ {d.food}</h4>
-                  <p>Qty: {d.quantity}</p>
-                  <p>Location: {d.location}</p>
-                  <p>Status: {d.status}</p>
-                  <p>
-                    Date: {new Date(d.createdAt).toLocaleString()}
-                  </p>
+            {settingsTab === 'account' && (
+              <div className="card" style={{ padding: 16 }}>
+                <h3>Account</h3>
+                <div className="card-grid">
+                  <div className="card"><h4>Name</h4><p>{userName}</p></div>
+                  <div className="card"><h4>Email</h4><p>{userEmail || 'N/A'}</p></div>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
+            {settingsTab === 'notifications' && (
+              <div className="card" style={{ padding: 16 }}>
+                <h3>Notifications</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input type="checkbox" checked={true} onChange={() => {}} />
+                    <span>Enable in-app notifications</span>
+                  </label>
+                  <p style={{ color: '#6b7280', fontSize: 14 }}>In-app notifications are enabled in this demo.</p>
+                </div>
+              </div>
+            )}
+            {settingsTab === 'preferences' && (
+              <div className="card" style={{ padding: 16 }}>
+                <h3>Preferences</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
+                  <div>
+                    <label>Default Pickup Location (preview only)</label>
+                    <input
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="e.g., Andheri West, Mumbai"
+                    />
+                  </div>
+                  <div>
+                    <label>Theme</label>
+                    <select value={theme} onChange={(e) => setTheme(e.target.value)}>
+                      <option value="light">Light</option>
+                      <option value="dark">Dark</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginTop: 12 }}>
+                  <button className="btn primary" type="button" onClick={() => alert('Preferences saved (demo)')}>Save Preferences</button>
+                </div>
+              </div>
+            )}
           </div>
         );
       case "currentDonations":
@@ -499,11 +654,23 @@ const DonorDashboard = () => {
                 
                 <div className="form-row">
                   <label>Pickup Location *</label>
-                  <input 
-                    value={location} 
-                    onChange={(e) => setLocation(e.target.value)} 
-                    placeholder="e.g., Andheri West, Mumbai" 
-                  />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input 
+                      value={location} 
+                      onChange={(e) => setLocation(e.target.value)} 
+                      placeholder="e.g., Andheri West, Mumbai" 
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => openMapForLocation(location)}
+                      disabled={!location}
+                      title="Show distance from receiver to this pickup"
+                    >
+                      <FaMapMarkedAlt style={{ marginRight: 6 }} /> Map
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="form-row">
@@ -656,35 +823,44 @@ const DonorDashboard = () => {
             </div>
           </div>
         );
-      case "rewards":
-        return (
-          <div className="dashboard-content">
-            <h2>Rewards</h2>
-            <div className="card-grid">
-              <div className="card reward">
-                <h3>🎉 FoodPoints</h3>
-                <p>120</p>
-              </div>
-              <div className="card reward">
-                <h3>🏆 Badges</h3>
-                <p>Gold Donor</p>
-              </div>
-            </div>
-          </div>
-        );
       case "connections":
         return (
           <div className="dashboard-content">
             <h2>Connections</h2>
             <div className="card-grid">
-              <div className="card">
-                <h4>Rajanikant jaiswar</h4>
-                <p>Receiver</p>
-              </div>
-              <div className="card">
-                <h4>Helping Hands NGO</h4>
-                <p>Organization</p>
-              </div>
+              {notifications
+                .filter((n) => n.type === 'donation_accepted' || n.type === 'donation_received')
+                .map((n) => {
+                  const r = n.meta?.receiver || {};
+                  const d = n.meta?.donation || {};
+                  return (
+                    <div key={n._id || n.id} className="card">
+                      <h4 style={{ marginTop: 0 }}>{r.name || 'Receiver'}</h4>
+                      <p style={{ marginTop: 4, color: '#6b7280' }}>Receiver</p>
+                      {r.email && <p>Email: {r.email}</p>}
+                      {r.location && <p>Receiver Location: {r.location}</p>}
+                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e5e7eb' }}>
+                        <div><strong>Food:</strong> {
+                          d.food || n.meta?.food || d.foodName || n.meta?.foodName || d.item || n.meta?.item || 'N/A'
+                        }</div>
+                        {(d.quantity || n.meta?.quantity || d.qty || n.meta?.qty) && (
+                          <div><strong>Quantity:</strong> {d.quantity || n.meta?.quantity || d.qty || n.meta?.qty}</div>
+                        )}
+                        {(d.location || n.meta?.location || n.meta?.pickup) && (
+                          <div><strong>Pickup:</strong> {d.location || n.meta?.location || n.meta?.pickup}</div>
+                        )}
+                        {n.type === 'donation_received' ? (
+                          <div><strong>Received at:</strong> {new Date(n.createdAt || d.updatedAt || Date.now()).toLocaleString()}</div>
+                        ) : (
+                          <div><strong>Accepted at:</strong> {new Date(n.createdAt || d.createdAt || Date.now()).toLocaleString()}</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              {notifications.filter((n) => n.type === 'donation_accepted' || n.type === 'donation_received').length === 0 && (
+                <div className="card"><p>No connections yet. When a receiver accepts or receives your donation, they will appear here.</p></div>
+              )}
             </div>
           </div>
         );
@@ -760,6 +936,7 @@ const DonorDashboard = () => {
   }
 
   return (
+    <>
     <div className="dashboard">
       {/* Sidebar */}
       <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
@@ -837,8 +1014,13 @@ const DonorDashboard = () => {
               </button>
               {showNotifications && (
                 <div className="notification-dropdown" style={{ position: "absolute", right: 0, marginTop: 8, width: 320, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, boxShadow: "0 10px 15px rgba(0,0,0,0.1)", zIndex: 10 }}>
-                  <div style={{ padding: 12, borderBottom: "1px solid #e5e7eb" }}>
+                  <div style={{ padding: 12, borderBottom: "1px solid #e5e7eb", display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <strong>Notifications</strong>
+                    {unreadCount > 0 && (
+                      <button className="btn" style={{ fontSize: 12, padding: '6px 10px' }} onClick={handleMarkAllRead}>
+                        Mark all read
+                      </button>
+                    )}
                   </div>
                   <div style={{ maxHeight: 300, overflowY: "auto" }}>
                     {notifError && (
@@ -854,8 +1036,15 @@ const DonorDashboard = () => {
                           <div style={{ color: "#374151", fontSize: 14 }}>{n.message}</div>
                           {n.meta?.receiver && (
                             <div style={{ color: "#374151", fontSize: 13, marginTop: 4 }}>
-                              <strong>Receiver:</strong> {n.meta.receiver.name || 'N/A'}
-                              {n.meta.receiver.email ? ` (${n.meta.receiver.email})` : ''}
+                              <div>
+                                <strong>Receiver:</strong> {n.meta.receiver.name || 'N/A'}
+                                {n.meta.receiver.email ? ` (${n.meta.receiver.email})` : ''}
+                              </div>
+                              {n.meta.receiver.location && (
+                                <div style={{ marginTop: 2 }}>
+                                  <strong>Receiver Location:</strong> {n.meta.receiver.location}
+                                </div>
+                              )}
                             </div>
                           )}
                           <div style={{ color: "#6b7280", fontSize: 12, marginTop: 4 }}>{new Date(n.createdAt).toLocaleString()}</div>
@@ -1013,6 +1202,16 @@ const DonorDashboard = () => {
         <div className="content-area">{renderContent()}</div>
       </div>
     </div>
+    {mapOpen && (
+      <MapDistanceModal
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        origin={mapOrigin}
+        destination={mapDestination}
+        title="Receiver to Donor Directions"
+      />
+    )}
+    </>
   );
 };
 

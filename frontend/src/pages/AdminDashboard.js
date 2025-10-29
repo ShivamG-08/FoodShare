@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { getAllDonations } from "../services/donationApi";
 import {
   FaTachometerAlt,
   FaUsers,
@@ -23,24 +25,21 @@ function StatCard({ title, value, sub, icon }) {
   );
 }
 
-const mockUsers = [
-  { id: 1, name: "John Doe", role: "receiver", email: "john@example.com", status: "active" },
-  { id: 2, name: "Acme Foods", role: "donor", email: "donate@acme.com", status: "active" },
-  { id: 3, name: "Jane Smith", role: "receiver", email: "jane@x.com", status: "blocked" },
-];
-
-const mockDonations = [
-  { id: 101, title: "Bread & Pastries", donor: "Sunrise Bakery", qty: "20 items", status: "available" },
-  { id: 102, title: "Cooked Meals", donor: "City Canteen", qty: "12 servings", status: "accepted" },
-  { id: 103, title: "Vegetables", donor: "Green Farm", qty: "2 crates", status: "completed" },
-];
+const mockUsers = [];
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState("overview");
   const [query, setQuery] = useState("");
 
   // Local users state so admin actions (add donor/receiver) reflect in tables
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState([]);
+  const [donations, setDonations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeDonations: 0,
+    mealsServed: 0 // We'll keep this as a static value for now
+  });
 
   // Modal state
   const [showDonorModal, setShowDonorModal] = useState(false);
@@ -61,9 +60,65 @@ export default function AdminDashboard() {
     alert("Settings saved");
   };
 
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    
+    // Fetch users
+    const fetchUsers = axios.get("http://localhost:5000/api/users");
+    // Fetch donations
+    const fetchDonations = getAllDonations();
+
+    Promise.all([fetchUsers, fetchDonations])
+      .then(([usersRes, donationsData]) => {
+        if (!active) return;
+        
+        // Process users
+        const userList = Array.isArray(usersRes.data?.users) ? usersRes.data.users : [];
+        const mappedUsers = userList.map((u) => ({
+          id: u._id || u.id,
+          customId: u.customId || `ID-${u._id.toString().substring(0, 4)}`,
+          name: u.name,
+          role: u.role,
+          email: u.email,
+          status: "active",
+        }));
+        setUsers(mappedUsers);
+        
+        // Process donations
+        const donationsList = Array.isArray(donationsData) ? donationsData : [];
+        setDonations(donationsList);
+        
+        // Update stats
+        setStats({
+          totalUsers: userList.length,
+          activeDonations: donationsList.filter(d => d.status !== 'completed').length,
+          mealsServed: 105000 // Static value for now
+        });
+      })
+      .catch((err) => {
+        console.error("Error fetching data:", err);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const filteredUsers = users.filter(
     (u) => u.name.toLowerCase().includes(query.toLowerCase()) || u.email.toLowerCase().includes(query.toLowerCase())
   );
+  const filteredDonations = donations.filter((d) => {
+    const donorName = d.userId?.name || 'Unknown Donor';
+    return (
+      d.food?.toLowerCase().includes(query.toLowerCase()) ||
+      donorName.toLowerCase().includes(query.toLowerCase()) ||
+      d.status?.toLowerCase().includes(query.toLowerCase())
+    );
+  });
   const filteredDonors = users.filter(
     (u) => u.role === "donor" && (u.name.toLowerCase().includes(query.toLowerCase()) || u.email.toLowerCase().includes(query.toLowerCase()))
   );
@@ -159,20 +214,57 @@ export default function AdminDashboard() {
         {tab === "overview" && (
           <section>
             <div className="ad-stats">
-              <StatCard title="Total Users" value="1,245" sub="+32 this week" icon={<FaUsers />} />
-              <StatCard title="Active Donations" value="87" sub="12 expiring soon" icon={<FaBoxOpen />} />
-              <StatCard title="Meals Served" value="105k" sub="+1.2k today" icon={<FaChartBar />} />
+              <StatCard 
+                title="Total Users" 
+                value={stats.totalUsers.toLocaleString()} 
+                sub={`${Math.floor(Math.random() * 20) + 10} this week`} 
+                icon={<FaUsers />} 
+              />
+              <StatCard 
+                title="Active Donations" 
+                value={stats.activeDonations.toLocaleString()} 
+                sub={`${Math.floor(Math.random() * 5) + 1} expiring soon`} 
+                icon={<FaBoxOpen />} 
+              />
+              <StatCard 
+                title="Meals Served" 
+                value={Math.floor(stats.mealsServed / 1000) + 'k+'} 
+                sub={`+${Math.floor(Math.random() * 200) + 100} today`} 
+                icon={<FaChartBar />} 
+              />
             </div>
             <div className="ad-panel">
               <h3>Recent Donations</h3>
               <table className="ad-table">
                 <thead>
-                  <tr><th>ID</th><th>Title</th><th>Donor</th><th>Qty</th><th>Status</th></tr>
+                  <tr><th>Food Name</th><th>Donor Name</th><th>Quantity</th><th>Status</th><th>Assigned To</th></tr>
                 </thead>
                 <tbody>
-                  {mockDonations.slice(0,5).map(d => (
-                    <tr key={d.id}><td>{d.id}</td><td>{d.title}</td><td>{d.donor}</td><td>{d.qty}</td><td><span className={`status ${d.status}`}>{d.status}</span></td></tr>
-                  ))}
+                  {loading ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-4">Loading donations...</td>
+                    </tr>
+                  ) : filteredDonations.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-4">No donations found</td>
+                    </tr>
+                  ) : (
+                    filteredDonations.map((d) => (
+                      <tr key={d._id}>
+                        <td>{d.food || 'N/A'}</td>
+                        <td>{d.userId?.name || 'Unknown Donor'}</td>
+                        <td>{d.quantity || 'N/A'}</td>
+                        <td>
+                          <span className={`ad-status-badge ${d.status || 'pending'}`}>
+                            {d.status || 'pending'}
+                          </span>
+                        </td>
+                        <td>
+                          {d.assignedTo?.name ? `Assigned to: ${d.assignedTo.name}` : 'Not assigned'}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -194,18 +286,18 @@ export default function AdminDashboard() {
               <tbody>
                 {filteredUsers.map(u => (
                   <tr key={u.id}>
-                    <td>{u.id}</td>
+                    <td>{u.customId || `ID-${u.id.toString().substring(0, 4)}`}</td>
                     <td>{u.name}</td>
                     <td>{u.role}</td>
                     <td>{u.email}</td>
                     <td><span className={`status ${u.status}`}>{u.status}</span></td>
                     <td className="row-actions">
-                      <button className="btn sm">View</button>
-                      <button className="btn sm">Edit</button>
+                      {/* <button className="btn sm">View</button>
+                      <button className="btn sm">Edit</button> */}
                       <button className="btn sm danger">{u.status === 'blocked' ? 'Unblock' : 'Block'}</button>
                     </td>
                   </tr>
-                ))}
+                ))}..
               </tbody>
             </table>
           </section>
@@ -226,13 +318,13 @@ export default function AdminDashboard() {
               <tbody>
                 {filteredDonors.map(u => (
                   <tr key={u.id}>
-                    <td>{u.id}</td>
+                    <td>{u.customId || `ID-${u.id.toString().substring(0, 4)}`}</td>
                     <td>{u.name}</td>
                     <td>{u.email}</td>
                     <td><span className={`status ${u.status}`}>{u.status}</span></td>
                     <td className="row-actions">
-                      <button className="btn sm">View</button>
-                      <button className="btn sm">Edit</button>
+                      {/* <button className="btn sm">View</button>
+                      <button className="btn sm">Edit</button> */}
                       <button className="btn sm danger">{u.status === 'blocked' ? 'Unblock' : 'Block'}</button>
                     </td>
                   </tr>
@@ -257,13 +349,13 @@ export default function AdminDashboard() {
               <tbody>
                 {filteredReceivers.map(u => (
                   <tr key={u.id}>
-                    <td>{u.id}</td>
+                    <td>{u.customId || `ID-${u.id.toString().substring(0, 4)}`}</td>
                     <td>{u.name}</td>
                     <td>{u.email}</td>
                     <td><span className={`status ${u.status}`}>{u.status}</span></td>
                     <td className="row-actions">
-                      <button className="btn sm">View</button>
-                      <button className="btn sm">Edit</button>
+                      {/* <button className="btn sm">View</button>
+                      <button className="btn sm">Edit</button> */}
                       <button className="btn sm danger">{u.status === 'blocked' ? 'Unblock' : 'Block'}</button>
                     </td>
                   </tr>
@@ -286,19 +378,31 @@ export default function AdminDashboard() {
                 <tr><th>ID</th><th>Title</th><th>Donor</th><th>Qty</th><th>Status</th><th>Actions</th></tr>
               </thead>
               <tbody>
-                {mockDonations.map(d => (
-                  <tr key={d.id}>
-                    <td>{d.id}</td>
-                    <td>{d.title}</td>
-                    <td>{d.donor}</td>
-                    <td>{d.qty}</td>
-                    <td><span className={`status ${d.status}`}>{d.status}</span></td>
-                    <td className="row-actions">
-                      <button className="btn sm">Details</button>
-                      <button className="btn sm">Archive</button>
-                    </td>
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-4">Loading donations...</td>
                   </tr>
-                ))}
+                ) : filteredDonations.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-4">No donations found</td>
+                  </tr>
+                ) : (
+                  filteredDonations.map((d) => (
+                    <tr key={d._id}>
+                      <td>{d.food || 'N/A'}</td>
+                      <td>{d.userId?.name || 'Unknown Donor'}</td>
+                      <td>{d.quantity || 'N/A'}</td>
+                      <td>
+                        <span className={`ad-status-badge ${d.status || 'pending'}`}>
+                          {d.status || 'pending'}
+                        </span>
+                      </td>
+                      <td>
+                        {d.assignedTo?.name ? `Assigned to: ${d.assignedTo.name}` : 'Not assigned'}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </section>

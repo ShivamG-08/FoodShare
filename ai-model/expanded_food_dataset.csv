@@ -1,701 +1,1001 @@
 food_type,food_name,cooked_hours,temperature_store,reheated,donation_status
-cooked,Chocolate Cake,9,8,False,borderline
-cooked,Pasta,24,8,True,not_ok
-cooked,Chocolate Cake,17,25,False,not_ok
-raw,Orange,0,25,False,borderline
-cooked,Fried Rice,1,4,False,ok
-cooked,Coffee,11,4,True,borderline
-raw,Grapes,0,8,False,ok
-cooked,Chocolate Cake,2,4,True,ok
-raw,Prawns,0,20,False,borderline
-raw,Fish,0,20,False,borderline
-raw,Chickpeas,0,20,False,borderline
-cooked,Coffee,4,20,True,borderline
-cooked,Chocolate Cake,1,20,True,borderline
-cooked,Fried Rice,5,20,True,borderline
-cooked,Burger,6,25,False,borderline
-raw,Banana,0,4,False,borderline
-raw,Mutton,0,8,False,ok
-raw,Wheat,0,20,False,borderline
-cooked,Noodles,6,8,True,borderline
-raw,Cabbage,0,20,False,borderline
-cooked,Manchurian,18,25,False,not_ok
-raw,Chickpeas,0,20,False,borderline
-cooked,Roti,10,4,True,borderline
-raw,Chicken,0,20,False,borderline
-cooked,Grilled Fish,7,25,False,borderline
-raw,Cheese,0,8,False,ok
-raw,Chickpeas,0,8,False,ok
-cooked,Roti,9,25,True,borderline
-raw,Banana,0,4,False,ok
-raw,Onion,0,8,False,ok
-cooked,Idli,2,25,True,borderline
-cooked,Fried Rice,4,25,True,borderline
-raw,Spinach,0,20,False,borderline
-cooked,Dosa,8,25,True,borderline
-cooked,Grilled Fish,8,4,False,borderline
-raw,Chickpeas,0,8,False,ok
-cooked,Paneer Butter Masala,23,20,True,not_ok
-raw,Spinach,0,20,False,borderline
-raw,Paneer,0,4,False,ok
-cooked,Pastry,19,4,True,not_ok
-cooked,Burger,3,8,False,ok
-cooked,Dosa,23,25,True,not_ok
-cooked,Milkshake,14,8,False,not_ok
-raw,Cabbage,0,4,False,ok
-cooked,Biryani,22,25,False,not_ok
-raw,Apple,0,8,False,ok
-cooked,Paneer Butter Masala,13,25,True,not_ok
-cooked,Dal Tadka,17,4,False,not_ok
-raw,Fish,0,4,False,ok
-cooked,Biryani,14,4,True,not_ok
-cooked,Samosa,22,8,True,not_ok
-cooked,Paneer Butter Masala,20,25,True,not_ok
-cooked,Samosa,11,4,False,borderline
-raw,Wheat,0,25,False,borderline
-cooked,Prawns Curry,6,8,True,borderline
-raw,Egg,0,8,False,ok
-cooked,Tea,18,20,True,not_ok
-cooked,Pizza,23,8,True,not_ok
-raw,Chicken,0,20,False,borderline
-cooked,Chocolate Cake,12,25,True,not_ok
-raw,Wheat,0,4,False,borderline
-raw,Rice,0,25,False,not_ok
-cooked,Manchurian,16,4,True,not_ok
-raw,Paneer,0,20,False,borderline
-raw,Paneer,0,4,False,ok
-raw,Onion,0,8,False,ok
-raw,Paneer,0,4,False,ok
-raw,Paneer,0,4,False,ok
-raw,Paneer,0,4,False,ok
-cooked,Idli,2,8,False,ok
-cooked,Samosa,9,25,False,borderline
-raw,Orange,0,25,False,borderline
-raw,Carrot,0,20,False,borderline
-cooked,Dosa,1,8,True,ok
-raw,Apple,0,20,False,borderline
-cooked,Idli,14,4,False,not_ok
-raw,Cheese,0,20,False,borderline
-raw,Chickpeas,0,8,False,ok
-cooked,Samosa,5,20,False,borderline
-raw,Wheat,0,20,False,borderline
-cooked,Pizza,10,8,True,borderline
-cooked,Fried Rice,18,8,True,not_ok
-cooked,Dal Tadka,11,20,False,borderline
-cooked,Juice,10,20,True,borderline
-raw,Grapes,0,25,False,borderline
-cooked,Pasta,15,8,True,not_ok
-raw,Orange,0,4,False,ok
-raw,Lentils,0,25,False,not_ok
-cooked,Dosa,21,4,True,not_ok
-cooked,Tea,3,8,True,ok
-raw,Potato,0,4,False,ok
-raw,Milk,0,25,False,not_ok
-raw,Paneer,0,8,False,ok
-cooked,Manchurian,8,4,True,borderline
-cooked,Fried Rice,17,25,True,not_ok
-cooked,Pastry,12,4,True,not_ok
-raw,Broccoli,0,8,False,ok
-raw,Mutton,0,8,False,ok
-cooked,Pizza,16,4,False,not_ok
-raw,Paneer,0,8,False,ok
-raw,Potato,0,25,False,not_ok
-cooked,Biryani,2,4,True,ok
 raw,Broccoli,0,20,False,borderline
-cooked,Noodles,24,4,True,not_ok
-cooked,Coffee,15,8,True,not_ok
-raw,Egg,0,4,False,ok
+cooked,Manchurian,17,19,True,not_ok
+cooked,Manchurian,19,22,False,not_ok
 raw,Onion,0,8,False,ok
-cooked,Grilled Fish,23,25,True,not_ok
-raw,Egg,0,20,False,borderline
-cooked,Samosa,9,25,False,borderline
-cooked,Chocolate Cake,18,8,False,not_ok
-raw,Cheese,0,25,False,borderline
-raw,Spinach,0,4,False,ok
-raw,Banana,0,8,False,ok
-cooked,Idli,2,8,True,ok
-raw,Milk,0,20,False,borderline
-raw,Prawns,0,8,False,borderline
-raw,Prawns,0,8,False,ok
-raw,Lentils,0,20,False,borderline
-cooked,Idli,5,4,True,borderline
-cooked,Samosa,23,4,False,not_ok
+raw,Orange,0,25,False,borderline
+cooked,Manchurian,18,25,False,not_ok
+raw,Cheese,0,6,True,ok
 raw,Chicken,0,25,False,borderline
-cooked,Tea,2,25,True,borderline
-cooked,Juice,23,4,True,not_ok
-cooked,Roti,7,25,False,borderline
-cooked,Tea,11,8,False,borderline
-cooked,Prawns Curry,11,4,True,borderline
-raw,Chickpeas,0,20,False,borderline
-cooked,Roti,19,20,False,not_ok
-cooked,Noodles,2,4,True,ok
-cooked,Biryani,19,4,True,not_ok
-raw,Paneer,0,4,False,borderline
-raw,Lentils,0,25,False,borderline
-cooked,Dal Tadka,22,20,True,not_ok
-cooked,Grilled Fish,24,8,True,not_ok
-raw,Tomato,0,25,False,not_ok
-raw,Cheese,0,8,False,borderline
-cooked,Prawns Curry,17,25,True,not_ok
-raw,Cheese,0,8,False,ok
-raw,Chickpeas,0,8,False,ok
-raw,Cheese,0,25,False,borderline
-cooked,Fried Rice,11,25,True,borderline
-raw,Broccoli,0,4,False,borderline
-cooked,Grilled Fish,12,20,True,not_ok
-raw,Mutton,0,25,False,borderline
-raw,Grapes,0,8,False,ok
-cooked,Dal Tadka,11,20,True,borderline
-cooked,Fried Rice,17,20,False,not_ok
-raw,Apple,0,8,False,ok
-cooked,Fried Rice,18,4,True,not_ok
-raw,Potato,0,20,False,borderline
-cooked,Noodles,11,20,False,borderline
-raw,Mutton,0,25,False,not_ok
-cooked,Chocolate Cake,1,20,True,borderline
-cooked,Juice,17,25,False,not_ok
-cooked,Biryani,13,25,True,not_ok
-raw,Prawns,0,25,False,not_ok
-raw,Rice,0,25,False,borderline
-cooked,Samosa,24,20,True,not_ok
-raw,Cheese,0,25,False,borderline
-cooked,Roti,24,20,True,not_ok
-raw,Milk,0,4,False,ok
-raw,Carrot,0,25,False,not_ok
-cooked,Dosa,16,8,False,not_ok
-raw,Spinach,0,20,False,borderline
-cooked,Idli,12,25,True,not_ok
-cooked,Milkshake,23,8,True,not_ok
-cooked,Pizza,6,20,True,borderline
-cooked,Dosa,7,25,True,borderline
-raw,Banana,0,4,False,borderline
-cooked,Roti,8,4,False,borderline
-raw,Grapes,0,25,False,borderline
-cooked,Biryani,23,25,True,not_ok
-raw,Cheese,0,4,False,ok
-cooked,Ice Cream,10,20,True,borderline
-cooked,Manchurian,12,20,True,not_ok
-cooked,Roti,6,20,True,borderline
-raw,Apple,0,4,False,borderline
-cooked,Grilled Fish,20,4,False,not_ok
-raw,Paneer,0,8,False,ok
-cooked,Milkshake,14,4,True,not_ok
-raw,Cabbage,0,4,False,ok
-raw,Milk,0,8,False,ok
-raw,Cabbage,0,20,False,borderline
-raw,Chicken,0,20,False,borderline
-cooked,Ice Cream,19,25,True,not_ok
-raw,Cheese,0,8,False,ok
-raw,Chicken,0,25,False,not_ok
-cooked,Juice,12,8,False,not_ok
-cooked,Coffee,23,8,True,not_ok
-cooked,Prawns Curry,1,4,False,ok
-cooked,Dal Tadka,2,20,True,borderline
-cooked,Roti,16,4,True,not_ok
-cooked,Grilled Fish,5,20,False,borderline
-raw,Fish,0,20,False,borderline
-raw,Carrot,0,25,False,not_ok
-cooked,Biryani,6,8,True,borderline
-cooked,Ice Cream,13,8,False,not_ok
-raw,Rice,0,25,False,not_ok
-cooked,Pasta,23,4,True,not_ok
-raw,Banana,2,8,False,ok
-raw,Cheese,2,21,False,borderline
-raw,Cheese,0,24,False,borderline
-raw,Spinach,2,19,False,borderline
-cooked,Roti,17,17,False,not_ok
-raw,Spinach,0,23,False,borderline
-raw,Carrot,1,22,False,not_ok
-cooked,Pastry,17,7,True,not_ok
-raw,Cheese,1,22,True,borderline
-raw,Potato,0,17,False,borderline
-raw,Prawns,0,13,False,ok
-cooked,Pizza,22,13,False,not_ok
-raw,Banana,0,4,True,borderline
-cooked,Grilled Fish,25,27,False,not_ok
+raw,Paneer,0,5,False,ok
 cooked,Pastry,15,7,True,not_ok
-raw,Paneer,4,6,False,ok
-raw,Cabbage,3,4,True,ok
-raw,Spinach,3,20,True,borderline
-raw,Wheat,2,3,True,borderline
-cooked,Manchurian,13,9,False,borderline
-cooked,Coffee,24,5,False,not_ok
+cooked,Pastry,17,5,True,not_ok
+cooked,Pizza,20,1,True,not_ok
+raw,Lentils,0,25,False,not_ok
+raw,Cheese,3,10,True,ok
 raw,Paneer,0,8,False,ok
-cooked,Paneer Butter Masala,13,26,False,not_ok
-raw,Wheat,4,18,False,borderline
-cooked,Fried Rice,3,4,True,ok
-raw,Broccoli,5,6,True,borderline
-cooked,Roti,20,3,True,not_ok
-cooked,Milkshake,23,8,True,not_ok
-raw,Orange,0,30,True,borderline
-raw,Grapes,0,7,False,ok
-cooked,Chocolate Cake,13,22,False,not_ok
-cooked,Roti,6,9,True,borderline
-raw,Broccoli,5,19,False,borderline
-cooked,Chocolate Cake,2,20,False,borderline
-cooked,Fried Rice,8,27,True,borderline
-raw,Milk,4,5,False,ok
-cooked,Dosa,21,9,True,not_ok
-cooked,Paneer Butter Masala,11,22,True,not_ok
-raw,Carrot,0,19,False,borderline
-cooked,Fried Rice,20,29,True,not_ok
-cooked,Coffee,9,19,False,borderline
-cooked,Fried Rice,18,5,False,not_ok
-raw,Chickpeas,1,22,True,borderline
-raw,Onion,5,13,True,ok
-cooked,Manchurian,23,30,False,not_ok
-raw,Onion,1,11,False,ok
-raw,Broccoli,4,17,False,borderline
-cooked,Fried Rice,19,23,True,not_ok
-cooked,Pastry,12,9,True,not_ok
-raw,Potato,4,6,False,ok
-raw,Broccoli,2,6,True,ok
-raw,Chickpeas,4,18,False,borderline
+cooked,Grilled Fish,5,26,False,borderline
+cooked,Biryani,19,4,True,not_ok
+cooked,Coffee,15,8,True,borderline
+raw,Cabbage,1,9,True,ok
+cooked,Samosa,21,11,True,not_ok
+raw,Carrot,0,23,False,borderline
+cooked,Biryani,4,9,True,ok
+raw,Onion,0,9,True,ok
+cooked,Dal Tadka,2,20,True,borderline
+cooked,Chocolate Cake,5,24,True,borderline
+cooked,Roti,24,20,True,not_ok
+cooked,Pizza,4,21,False,borderline
+cooked,Noodles,14,19,True,borderline
+raw,Chickpeas,0,20,False,borderline
 cooked,Manchurian,12,18,True,not_ok
-raw,Cheese,0,22,True,borderline
-raw,Grapes,2,26,True,borderline
-cooked,Biryani,22,26,True,not_ok
-raw,Mutton,1,29,False,not_ok
-cooked,Dal Tadka,13,19,True,borderline
-raw,Wheat,5,24,False,borderline
-cooked,Paneer Butter Masala,13,30,False,not_ok
-raw,Paneer,0,6,True,ok
-cooked,Prawns Curry,5,8,True,borderline
-raw,Mutton,3,10,True,ok
-raw,Chickpeas,0,9,True,ok
-cooked,Biryani,19,2,True,not_ok
-raw,Chicken,2,24,True,borderline
-raw,Chickpeas,1,18,True,borderline
-cooked,Coffee,14,4,False,borderline
-raw,Orange,0,22,True,borderline
+cooked,Samosa,28,4,True,not_ok
+raw,Tomato,3,23,True,not_ok
+raw,Chicken,0,20,False,borderline
+cooked,Samosa,8,24,True,borderline
+cooked,Fried Rice,19,19,False,not_ok
+raw,Milk,0,10,True,ok
+cooked,Juice,12,19,False,borderline
+cooked,Coffee,23,8,True,not_ok
+cooked,Pizza,10,20,True,borderline
+cooked,Samosa,21,8,True,not_ok
+raw,Banana,0,13,True,ok
+raw,Onion,5,13,True,ok
+raw,Mutton,0,11,True,ok
+cooked,Biryani,19,4,True,not_ok
+cooked,Biryani,25,23,False,not_ok
+cooked,Roti,11,22,True,borderline
+cooked,Manchurian,18,25,False,not_ok
+cooked,Milkshake,23,8,True,not_ok
+raw,Prawns,4,9,False,borderline
+cooked,Idli,2,24,False,borderline
+cooked,Samosa,22,10,False,not_ok
+raw,Mutton,0,23,True,borderline
+cooked,Fried Rice,5,20,True,borderline
+cooked,Fried Rice,18,5,False,not_ok
+raw,Chickpeas,5,5,False,ok
+cooked,Samosa,21,7,False,not_ok
+cooked,Biryani,24,22,False,not_ok
+raw,Milk,0,25,False,not_ok
+cooked,Samosa,3,21,False,borderline
+cooked,Dal Tadka,4,25,False,borderline
+cooked,Chocolate Cake,16,28,False,not_ok
+cooked,Dal Tadka,17,5,True,not_ok
+cooked,Grilled Fish,8,4,False,borderline
+raw,Spinach,0,23,False,borderline
+cooked,Pizza,10,8,True,borderline
+raw,Milk,0,24,False,not_ok
+cooked,Idli,2,24,False,borderline
+cooked,Pasta,24,8,True,not_ok
+raw,Onion,2,6,False,ok
+cooked,Ice Cream,17,28,False,not_ok
+raw,Egg,0,4,False,ok
+cooked,Pizza,20,7,True,not_ok
+cooked,Manchurian,17,18,False,not_ok
+cooked,Idli,7,7,True,borderline
+raw,Milk,0,4,False,ok
+raw,Cheese,2,21,False,borderline
 cooked,Pizza,9,5,False,borderline
 cooked,Manchurian,19,22,False,not_ok
-cooked,Grilled Fish,3,24,False,borderline
-cooked,Samosa,10,23,True,borderline
-raw,Prawns,4,9,False,borderline
-raw,Paneer,4,1,False,ok
-cooked,Samosa,8,25,True,borderline
-cooked,Chocolate Cake,5,24,True,borderline
-cooked,Samosa,4,19,True,borderline
-raw,Banana,2,9,True,ok
-raw,Chickpeas,2,22,False,borderline
-cooked,Fried Rice,17,30,False,not_ok
-cooked,Samosa,10,26,False,borderline
-cooked,Milkshake,15,13,False,not_ok
-cooked,Coffee,26,7,False,not_ok
-raw,Broccoli,4,7,True,ok
-cooked,Pizza,18,8,False,not_ok
-cooked,Grilled Fish,22,9,True,not_ok
-cooked,Grilled Fish,21,29,True,not_ok
-cooked,Pasta,17,9,True,not_ok
-cooked,Pizza,25,10,True,not_ok
-cooked,Biryani,23,26,False,not_ok
-raw,Paneer,0,5,True,borderline
-raw,Chickpeas,5,7,True,ok
-cooked,Pastry,15,6,True,not_ok
-raw,Prawns,0,6,True,borderline
+raw,Cheese,5,26,True,borderline
+cooked,Coffee,20,8,False,not_ok
+raw,Chickpeas,4,18,False,borderline
 cooked,Coffee,27,11,True,not_ok
-cooked,Burger,6,28,False,borderline
-cooked,Roti,19,22,True,not_ok
-cooked,Prawns Curry,11,3,True,borderline
-cooked,Pizza,19,9,True,not_ok
-cooked,Chocolate Cake,10,24,True,not_ok
-cooked,Tea,5,24,False,borderline
-raw,Chickpeas,0,22,True,borderline
-cooked,Chocolate Cake,0,22,True,borderline
-raw,Cheese,0,24,True,borderline
-cooked,Noodles,11,7,True,borderline
-cooked,Chocolate Cake,3,8,False,ok
-cooked,Idli,19,2,False,not_ok
-raw,Cabbage,1,9,True,ok
-raw,Mutton,0,6,True,ok
-raw,Cheese,3,24,True,borderline
-cooked,Juice,13,7,True,not_ok
-cooked,Idli,0,6,True,ok
-cooked,Noodles,14,19,True,borderline
-cooked,Dosa,14,5,True,not_ok
-raw,Mutton,0,23,True,borderline
-cooked,Dal Tadka,7,25,True,borderline
-raw,Cabbage,1,5,True,ok
-raw,Prawns,2,13,False,borderline
-raw,Paneer,1,1,True,ok
-cooked,Tea,11,11,True,borderline
-cooked,Paneer Butter Masala,12,29,False,not_ok
-cooked,Tea,11,13,True,borderline
-raw,Carrot,0,23,True,not_ok
-raw,Rice,2,23,True,not_ok
-cooked,Milkshake,16,3,False,not_ok
-cooked,Fried Rice,6,21,False,borderline
-raw,Onion,4,12,True,ok
-raw,Banana,0,2,False,ok
-raw,Fish,2,21,False,borderline
-cooked,Pastry,17,5,True,not_ok
-raw,Milk,4,8,True,ok
-raw,Orange,0,4,False,ok
-raw,Spinach,4,22,False,borderline
-cooked,Chocolate Cake,4,17,False,borderline
-cooked,Samosa,22,5,True,not_ok
-cooked,Pizza,5,25,True,borderline
 raw,Fish,0,1,True,ok
-cooked,Pizza,7,18,True,borderline
-cooked,Biryani,24,22,False,not_ok
-cooked,Manchurian,17,8,True,not_ok
-cooked,Biryani,11,10,False,borderline
-raw,Onion,1,10,True,ok
-cooked,Samosa,21,11,True,not_ok
-cooked,Ice Cream,20,29,False,not_ok
-raw,Chickpeas,5,5,False,ok
-cooked,Manchurian,21,3,False,not_ok
-cooked,Tea,8,6,True,ok
-raw,Cabbage,4,21,True,borderline
-raw,Chickpeas,3,10,True,ok
-cooked,Dosa,24,9,True,not_ok
-raw,Cheese,0,6,False,ok
-raw,Broccoli,1,10,False,ok
-raw,Banana,3,12,False,ok
-raw,Apple,3,21,True,borderline
-cooked,Dal Tadka,13,23,False,borderline
-cooked,Chocolate Cake,4,25,False,borderline
-raw,Carrot,0,25,True,not_ok
-raw,Rice,0,27,True,not_ok
-raw,Cheese,4,25,False,borderline
-cooked,Tea,6,28,True,borderline
-cooked,Biryani,12,5,False,not_ok
-raw,Grapes,5,6,False,ok
-cooked,Biryani,10,7,False,borderline
-raw,Chicken,0,19,True,borderline
-raw,Chickpeas,1,20,False,borderline
-cooked,Samosa,3,21,False,borderline
-cooked,Prawns Curry,15,29,False,not_ok
-raw,Chicken,4,17,True,borderline
-cooked,Chocolate Cake,21,30,True,not_ok
-raw,Banana,3,9,False,ok
-cooked,Dosa,9,24,True,borderline
-raw,Cheese,3,10,True,ok
-raw,Fish,4,25,False,borderline
-cooked,Grilled Fish,17,23,False,not_ok
-raw,Cheese,0,7,True,ok
-raw,Onion,5,7,True,ok
-raw,Prawns,2,23,False,borderline
-raw,Paneer,0,7,False,ok
+cooked,Samosa,11,4,False,borderline
+raw,Cabbage,3,4,True,ok
+raw,Chicken,0,25,False,not_ok
 cooked,Biryani,20,9,True,not_ok
-raw,Cheese,0,12,True,ok
-raw,Potato,4,6,False,ok
-cooked,Samosa,11,28,True,borderline
-cooked,Idli,4,23,False,borderline
+raw,Grapes,0,26,True,borderline
+cooked,Burger,3,8,False,ok
+raw,Prawns,0,25,False,not_ok
+cooked,Burger,6,25,False,borderline
+raw,Paneer,0,4,False,ok
+raw,Broccoli,4,20,False,borderline
+cooked,Samosa,21,11,True,not_ok
+cooked,Roti,19,20,False,not_ok
+cooked,Manchurian,17,28,True,not_ok
+cooked,Samosa,9,29,False,borderline
+cooked,Manchurian,16,4,True,not_ok
+raw,Cheese,0,8,False,ok
+raw,Broccoli,0,4,True,borderline
+cooked,Biryani,20,7,False,not_ok
+cooked,Ice Cream,13,20,False,borderline
+raw,Prawns,5,7,True,ok
+cooked,Juice,24,1,True,not_ok
+cooked,Pasta,17,9,True,not_ok
+raw,Paneer,0,7,False,ok
+cooked,Chocolate Cake,2,25,False,borderline
+cooked,Chocolate Cake,13,22,False,not_ok
+cooked,Burger,3,8,False,ok
+cooked,Roti,9,25,True,borderline
+cooked,Grilled Fish,24,8,True,not_ok
+raw,Banana,2,8,False,ok
+raw,Spinach,0,20,False,borderline
+cooked,Dal Tadka,17,4,False,not_ok
+raw,Prawns,0,25,False,not_ok
+cooked,Grilled Fish,6,18,False,borderline
+cooked,Ice Cream,13,11,False,not_ok
+cooked,Pizza,16,4,False,not_ok
+raw,Paneer,0,5,True,ok
+raw,Cabbage,1,18,False,borderline
+cooked,Grilled Fish,28,29,False,not_ok
+cooked,Coffee,20,8,False,not_ok
+cooked,Chocolate Cake,17,24,False,not_ok
+cooked,Fried Rice,1,4,False,ok
+raw,Spinach,3,20,True,borderline
+raw,Prawns,0,25,False,not_ok
+cooked,Roti,13,22,True,borderline
+raw,Wheat,5,25,True,borderline
+raw,Carrot,1,22,False,not_ok
+cooked,Burger,6,25,False,borderline
+cooked,Dosa,12,23,False,borderline
+cooked,Chocolate Cake,2,21,True,borderline
+raw,Apple,2,22,False,borderline
+cooked,Chocolate Cake,3,2,False,ok
+cooked,Coffee,9,19,False,borderline
+cooked,Fried Rice,19,26,False,not_ok
+cooked,Pastry,12,4,True,not_ok
+cooked,Biryani,25,23,False,not_ok
+cooked,Grilled Fish,6,18,False,borderline
+cooked,Chocolate Cake,13,22,False,not_ok
+cooked,Idli,19,9,False,not_ok
+cooked,Roti,8,4,False,borderline
+raw,Apple,0,4,False,borderline
+raw,Chickpeas,0,8,False,ok
+raw,Cheese,4,24,False,borderline
+raw,Cheese,0,25,False,borderline
+cooked,Chocolate Cake,23,11,True,not_ok
+raw,Chickpeas,1,22,True,borderline
+cooked,Pasta,15,8,True,not_ok
+raw,Chicken,1,18,False,borderline
+cooked,Fried Rice,19,19,False,not_ok
+raw,Cabbage,5,17,True,borderline
+cooked,Ice Cream,13,11,False,not_ok
+raw,Milk,0,27,True,not_ok
+cooked,Roti,9,25,True,borderline
+raw,Orange,3,22,True,borderline
+cooked,Idli,7,7,True,borderline
+cooked,Biryani,24,22,False,not_ok
+cooked,Pastry,17,5,True,not_ok
+cooked,Fried Rice,11,25,False,borderline
+cooked,Chocolate Cake,3,6,True,ok
+cooked,Tea,8,6,True,ok
+raw,Paneer,5,4,True,ok
+cooked,Chocolate Cake,13,22,False,not_ok
+cooked,Coffee,23,8,True,not_ok
+cooked,Fried Rice,3,4,True,ok
 cooked,Fried Rice,22,19,False,not_ok
+raw,Onion,5,7,True,ok
+cooked,Milkshake,15,13,False,not_ok
+raw,Orange,2,22,False,borderline
+raw,Grapes,0,7,False,ok
+raw,Wheat,5,24,False,borderline
+raw,Rice,0,27,True,not_ok
+raw,Cheese,5,26,True,borderline
+cooked,Dosa,22,28,False,not_ok
+cooked,Pastry,16,4,False,not_ok
+raw,Cabbage,1,5,True,ok
+cooked,Fried Rice,6,4,False,ok
+cooked,Fried Rice,3,4,True,ok
+cooked,Chocolate Cake,2,20,False,borderline
+raw,Paneer,0,5,True,ok
+cooked,Grilled Fish,5,26,False,borderline
+raw,Fish,4,25,False,borderline
+cooked,Idli,3,2,True,borderline
+raw,Spinach,1,22,True,borderline
+cooked,Samosa,9,29,False,borderline
+raw,Broccoli,5,19,False,borderline
+cooked,Dosa,23,30,True,not_ok
+raw,Spinach,0,4,False,ok
+raw,Banana,4,6,False,ok
+cooked,Juice,22,26,True,not_ok
+cooked,Fried Rice,19,26,False,not_ok
+cooked,Coffee,14,4,False,borderline
+cooked,Prawns Curry,18,30,True,not_ok
 raw,Onion,0,9,True,ok
 raw,Lentils,0,21,False,borderline
-cooked,Idli,2,24,False,borderline
-raw,Lentils,3,22,False,borderline
-raw,Onion,2,6,False,ok
-raw,Grapes,0,6,True,ok
-cooked,Ice Cream,13,20,False,borderline
-raw,Wheat,5,25,True,borderline
-cooked,Chocolate Cake,19,22,False,not_ok
-cooked,Ice Cream,20,25,True,not_ok
-raw,Carrot,2,29,True,not_ok
-cooked,Burger,8,11,False,ok
-cooked,Roti,13,22,True,borderline
-raw,Prawns,3,12,False,ok
-cooked,Biryani,23,25,True,not_ok
-raw,Milk,0,26,True,not_ok
-cooked,Manchurian,17,18,False,not_ok
-raw,Broccoli,5,1,False,borderline
-cooked,Milkshake,18,7,False,not_ok
-cooked,Dosa,10,23,True,borderline
-raw,Cabbage,0,21,True,borderline
-cooked,Grilled Fish,6,18,False,borderline
-raw,Cheese,5,13,False,ok
-raw,Mutton,5,29,True,not_ok
-cooked,Chocolate Cake,10,10,False,borderline
-cooked,Dosa,22,28,False,not_ok
-cooked,Biryani,18,5,False,not_ok
-cooked,Biryani,18,4,True,not_ok
-cooked,Biryani,4,9,True,ok
-cooked,Manchurian,16,17,True,not_ok
-cooked,Biryani,14,30,False,not_ok
-raw,Chickpeas,3,7,False,ok
-raw,Cheese,5,22,False,borderline
-cooked,Juice,24,1,True,not_ok
-raw,Apple,0,22,False,borderline
-raw,Broccoli,3,5,False,ok
-raw,Milk,0,8,False,ok
-cooked,Biryani,25,27,True,not_ok
-cooked,Dal Tadka,10,20,False,borderline
-cooked,Fried Rice,23,1,False,not_ok
-raw,Paneer,2,5,False,ok
-raw,Carrot,5,30,False,not_ok
-cooked,Chocolate Cake,16,28,False,not_ok
-raw,Cheese,0,4,True,ok
-cooked,Grilled Fish,7,9,True,borderline
-cooked,Idli,3,2,False,borderline
-cooked,Dosa,25,7,False,not_ok
-raw,Lentils,0,29,False,not_ok
-cooked,Prawns Curry,0,9,True,ok
-cooked,Dal Tadka,3,24,False,borderline
-cooked,Manchurian,17,19,True,not_ok
-raw,Chickpeas,0,7,True,ok
-cooked,Ice Cream,11,20,True,borderline
-cooked,Noodles,9,22,False,borderline
-raw,Milk,5,5,False,ok
-cooked,Tea,12,7,True,borderline
-cooked,Juice,22,26,True,not_ok
-raw,Tomato,0,28,True,not_ok
-raw,Spinach,3,9,True,ok
-raw,Rice,4,26,False,not_ok
-cooked,Samosa,26,22,True,not_ok
-raw,Mutton,0,12,True,ok
-raw,Banana,0,4,True,borderline
-cooked,Dosa,27,28,True,not_ok
-raw,Cheese,1,21,True,borderline
-cooked,Biryani,21,7,False,not_ok
-cooked,Idli,4,8,False,ok
-cooked,Fried Rice,9,27,True,borderline
-raw,Chickpeas,4,6,False,ok
-cooked,Dal Tadka,4,25,False,borderline
-raw,Cheese,5,26,True,borderline
-raw,Prawns,5,18,False,borderline
-cooked,Pasta,26,5,True,not_ok
-cooked,Pizza,20,1,True,not_ok
-cooked,Pizza,4,21,False,borderline
-cooked,Chocolate Cake,2,21,True,borderline
-cooked,Coffee,20,8,False,not_ok
-cooked,Roti,18,19,False,not_ok
-cooked,Roti,18,21,True,not_ok
-cooked,Idli,5,3,False,borderline
-cooked,Pizza,20,8,False,not_ok
-raw,Paneer,0,5,False,ok
-cooked,Idli,0,7,True,ok
-cooked,Manchurian,21,8,False,not_ok
-raw,Cheese,3,2,True,ok
-cooked,Pasta,19,8,True,not_ok
-cooked,Samosa,9,29,False,borderline
-raw,Paneer,5,4,True,ok
-raw,Cabbage,0,21,False,borderline
-raw,Tomato,3,23,True,not_ok
-raw,Milk,0,10,True,ok
-cooked,Pizza,20,7,True,not_ok
-cooked,Ice Cream,17,23,True,not_ok
-raw,Spinach,2,2,True,ok
-cooked,Biryani,22,30,False,not_ok
-cooked,Dosa,5,22,True,borderline
-cooked,Roti,27,19,False,not_ok
-cooked,Fried Rice,15,18,True,not_ok
-raw,Onion,0,10,False,ok
-cooked,Biryani,25,23,False,not_ok
-cooked,Dal Tadka,21,20,True,not_ok
-cooked,Chocolate Cake,20,24,False,not_ok
-cooked,Samosa,12,25,True,borderline
-raw,Chicken,2,22,True,borderline
-cooked,Chocolate Cake,2,25,False,borderline
-cooked,Roti,8,22,False,borderline
-raw,Carrot,0,23,False,borderline
-raw,Grapes,0,26,True,borderline
-raw,Paneer,4,4,True,ok
-raw,Prawns,4,13,True,borderline
-cooked,Juice,16,30,True,not_ok
-raw,Banana,4,6,False,ok
-raw,Onion,0,13,True,ok
-raw,Broccoli,0,4,True,borderline
-cooked,Dal Tadka,24,18,True,not_ok
-cooked,Biryani,22,29,False,not_ok
-raw,Wheat,1,29,False,borderline
-raw,Prawns,0,25,False,not_ok
-cooked,Dal Tadka,12,23,True,borderline
-raw,Mutton,0,11,True,ok
-cooked,Chocolate Cake,3,6,True,ok
-raw,Grapes,0,25,True,borderline
-raw,Onion,0,12,False,ok
-cooked,Dal Tadka,17,5,True,not_ok
-cooked,Prawns Curry,18,30,True,not_ok
-cooked,Samosa,8,24,True,borderline
-cooked,Samosa,25,3,True,not_ok
-raw,Paneer,4,4,False,ok
-cooked,Roti,23,17,False,not_ok
-raw,Onion,2,8,True,ok
-raw,Prawns,2,5,False,borderline
-cooked,Juice,19,27,False,not_ok
-cooked,Manchurian,18,1,False,not_ok
-raw,Banana,0,4,False,ok
-cooked,Noodles,8,9,False,borderline
-raw,Broccoli,4,20,False,borderline
-cooked,Dal Tadka,7,25,False,borderline
-cooked,Fried Rice,9,29,True,borderline
-cooked,Roti,8,7,True,borderline
-raw,Cheese,4,24,False,borderline
-raw,Cabbage,2,5,True,ok
-raw,Banana,1,6,True,ok
-raw,Chickpeas,5,9,True,ok
-raw,Paneer,0,4,False,ok
-raw,Fish,0,19,False,borderline
-cooked,Prawns Curry,2,9,False,ok
-raw,Chickpeas,1,5,True,ok
-cooked,Burger,8,11,False,ok
-cooked,Prawns Curry,3,2,False,ok
-raw,Tomato,0,28,True,not_ok
-cooked,Biryani,21,25,False,not_ok
-raw,Paneer,0,10,True,ok
-raw,Grapes,0,25,True,borderline
-cooked,Burger,7,8,True,ok
-raw,Prawns,0,5,False,borderline
-raw,Apple,0,4,False,borderline
-raw,Chickpeas,3,12,False,ok
-cooked,Samosa,11,23,True,borderline
-cooked,Idli,14,23,False,not_ok
-raw,Chicken,0,23,True,not_ok
-cooked,Burger,6,11,True,ok
-raw,Cabbage,1,18,False,borderline
-cooked,Roti,9,23,True,borderline
-cooked,Manchurian,15,7,False,not_ok
-raw,Mutton,4,10,True,ok
-raw,Apple,0,12,False,ok
-raw,Milk,3,23,False,not_ok
-raw,Potato,0,9,False,ok
-cooked,Dosa,12,23,False,borderline
-raw,Cabbage,2,17,True,borderline
-cooked,Idli,7,7,True,borderline
-raw,Cabbage,5,17,True,borderline
-cooked,Biryani,2,8,False,ok
-raw,Wheat,2,25,True,borderline
-raw,Milk,1,9,False,ok
-cooked,Samosa,28,4,True,not_ok
-raw,Milk,0,24,False,not_ok
-cooked,Samosa,21,8,True,not_ok
-cooked,Fried Rice,19,26,False,not_ok
-cooked,Samosa,21,7,False,not_ok
-cooked,Ice Cream,17,28,False,not_ok
-raw,Banana,0,13,True,ok
-cooked,Pasta,28,7,False,not_ok
-cooked,Manchurian,8,5,True,borderline
-cooked,Ice Cream,12,6,False,not_ok
-cooked,Idli,7,25,False,borderline
-cooked,Chocolate Cake,6,23,False,borderline
-raw,Cheese,3,22,True,borderline
-cooked,Ice Cream,13,11,False,not_ok
-cooked,Chocolate Cake,3,2,False,ok
-cooked,Pastry,15,3,True,not_ok
-raw,Orange,4,23,True,borderline
-raw,Chicken,1,18,False,borderline
-cooked,Pasta,26,2,False,not_ok
-raw,Onion,5,10,True,ok
-cooked,Grilled Fish,7,28,False,borderline
-cooked,Fried Rice,0,3,True,ok
-raw,Milk,5,28,False,not_ok
-cooked,Dosa,12,25,True,borderline
-cooked,Dal Tadka,13,19,False,borderline
-raw,Paneer,0,12,True,ok
-cooked,Samosa,5,25,False,borderline
-cooked,Dal Tadka,17,2,True,not_ok
-cooked,Noodles,22,2,False,not_ok
-cooked,Chocolate Cake,7,10,False,borderline
-cooked,Dosa,21,25,False,not_ok
-cooked,Manchurian,12,6,True,borderline
-cooked,Biryani,20,7,False,not_ok
-raw,Carrot,0,26,False,not_ok
-raw,Tomato,0,25,True,not_ok
-raw,Chickpeas,0,9,False,ok
-cooked,Chocolate Cake,22,24,False,not_ok
-cooked,Grilled Fish,7,2,True,borderline
-raw,Cheese,3,27,True,borderline
-raw,Paneer,5,10,True,ok
-cooked,Samosa,22,10,False,not_ok
-cooked,Fried Rice,6,17,False,borderline
-cooked,Idli,3,13,True,ok
-cooked,Burger,2,6,False,ok
-cooked,Fried Rice,3,28,True,borderline
-raw,Chickpeas,0,18,True,borderline
-cooked,Paneer Butter Masala,16,27,True,not_ok
-raw,Spinach,1,22,True,borderline
-raw,Banana,3,9,True,borderline
-cooked,Pizza,8,11,True,borderline
-cooked,Idli,0,24,True,borderline
-raw,Apple,0,7,False,borderline
+raw,Spinach,0,4,False,ok
 cooked,Grilled Fish,28,29,False,not_ok
-cooked,Burger,7,25,True,borderline
-raw,Cheese,0,6,True,ok
-cooked,Fried Rice,18,10,False,not_ok
-cooked,Tea,16,13,False,borderline
-cooked,Biryani,6,10,False,borderline
-raw,Chicken,4,22,True,borderline
-raw,Orange,3,22,True,borderline
-raw,Onion,1,7,False,ok
-cooked,Dal Tadka,9,20,True,borderline
-cooked,Fried Rice,15,19,False,not_ok
-cooked,Manchurian,17,20,False,not_ok
 raw,Rice,1,24,False,not_ok
-raw,Egg,3,6,True,ok
-cooked,Manchurian,19,23,False,not_ok
-raw,Grapes,0,7,False,ok
-raw,Chicken,0,25,True,borderline
-cooked,Paneer Butter Masala,16,22,True,not_ok
-cooked,Ice Cream,24,22,True,not_ok
-raw,Paneer,3,3,False,ok
-raw,Orange,2,22,False,borderline
-cooked,Manchurian,16,28,True,not_ok
-raw,Potato,2,17,False,borderline
-cooked,Dosa,6,8,False,ok
-cooked,Pizza,27,11,False,not_ok
-cooked,Fried Rice,16,2,False,not_ok
-raw,Spinach,0,18,False,borderline
-cooked,Fried Rice,11,25,False,borderline
-raw,Chicken,5,19,True,borderline
-raw,Paneer,2,8,True,ok
-cooked,Chocolate Cake,17,24,False,not_ok
-raw,Cabbage,5,20,False,borderline
-cooked,Samosa,28,22,False,not_ok
-raw,Milk,0,27,True,not_ok
-cooked,Roti,11,22,True,borderline
-cooked,Manchurian,17,28,True,not_ok
-cooked,Pastry,16,4,False,not_ok
-raw,Rice,4,28,True,not_ok
-cooked,Juice,22,2,False,not_ok
-raw,Chickpeas,0,20,True,borderline
-cooked,Pasta,27,5,False,not_ok
-raw,Chickpeas,5,9,False,ok
-cooked,Idli,19,9,False,not_ok
-raw,Orange,0,24,True,borderline
-cooked,Idli,3,22,True,borderline
-cooked,Roti,6,20,False,borderline
-cooked,Grilled Fish,22,23,True,not_ok
-cooked,Prawns Curry,16,24,True,not_ok
-cooked,Pasta,15,7,False,not_ok
-cooked,Coffee,15,8,True,borderline
-cooked,Dal Tadka,11,23,False,borderline
-cooked,Grilled Fish,5,26,False,borderline
-cooked,Idli,15,28,True,not_ok
-raw,Cheese,3,2,True,ok
-raw,Grapes,4,9,True,ok
-raw,Egg,0,20,False,borderline
-raw,Carrot,0,20,True,borderline
-raw,Apple,0,19,True,borderline
-raw,Cheese,0,27,True,borderline
-cooked,Idli,3,2,True,borderline
-raw,Mutton,1,6,False,ok
-cooked,Coffee,24,10,False,not_ok
-raw,Prawns,5,7,True,ok
-raw,Carrot,4,20,False,borderline
-cooked,Fried Rice,6,4,False,ok
-raw,Chickpeas,0,20,True,borderline
-cooked,Juice,13,8,False,not_ok
-cooked,Milkshake,27,11,False,not_ok
-cooked,Tea,2,5,False,ok
-cooked,Fried Rice,19,19,False,not_ok
-cooked,Roti,14,29,False,borderline
-raw,Paneer,0,5,True,ok
-raw,Cheese,4,9,False,ok
-cooked,Biryani,23,26,False,not_ok
-cooked,Pizza,10,20,True,borderline
-cooked,Roti,8,26,True,borderline
-cooked,Paneer Butter Masala,23,25,True,not_ok
-cooked,Biryani,24,26,True,not_ok
-raw,Apple,2,22,False,borderline
-cooked,Dosa,23,30,True,not_ok
-raw,Cabbage,0,25,True,borderline
-cooked,Biryani,12,2,True,not_ok
-cooked,Fried Rice,17,3,False,not_ok
-raw,Onion,0,12,True,ok
-raw,Grapes,0,8,True,ok
-cooked,Ice Cream,14,8,False,not_ok
+cooked,Pizza,10,8,True,borderline
 cooked,Chocolate Cake,23,11,True,not_ok
+raw,Spinach,0,4,False,ok
+cooked,Pasta,24,8,True,not_ok
+raw,Paneer,2,8,True,ok
+cooked,Manchurian,13,9,False,borderline
+cooked,Ice Cream,17,28,False,not_ok
+cooked,Fried Rice,3,4,True,ok
+cooked,Fried Rice,22,19,False,not_ok
+raw,Broccoli,5,1,False,borderline
+cooked,Fried Rice,16,2,False,not_ok
+cooked,Noodles,2,4,True,ok
+cooked,Samosa,11,4,False,borderline
+raw,Paneer,0,5,True,ok
+cooked,Idli,3,2,True,borderline
+cooked,Biryani,14,30,False,not_ok
+raw,Broccoli,4,17,False,borderline
+cooked,Noodles,9,22,False,borderline
+raw,Cheese,0,24,False,borderline
+raw,Cabbage,0,20,False,borderline
+cooked,Tea,2,25,True,borderline
+raw,Milk,0,26,True,not_ok
+cooked,Pastry,15,6,True,not_ok
+raw,Chickpeas,2,22,False,borderline
+cooked,Pizza,8,11,True,borderline
+cooked,Ice Cream,13,8,False,not_ok
+cooked,Samosa,8,24,True,borderline
+cooked,Grilled Fish,12,20,True,not_ok
+raw,Banana,3,9,True,borderline
+raw,Banana,2,8,False,ok
+cooked,Juice,23,4,True,not_ok
+raw,Cheese,0,8,False,ok
+cooked,Milkshake,16,3,False,not_ok
+cooked,Roti,18,21,True,not_ok
+raw,Cabbage,4,21,True,borderline
+cooked,Prawns Curry,16,24,True,not_ok
+raw,Broccoli,5,1,False,borderline
+raw,Chickpeas,5,5,False,ok
+cooked,Samosa,8,24,True,borderline
+cooked,Dal Tadka,11,20,True,borderline
+cooked,Fried Rice,17,20,False,not_ok
+raw,Chicken,2,22,True,borderline
+cooked,Fried Rice,11,25,False,borderline
+raw,Apple,0,12,False,ok
+raw,Fish,0,1,True,ok
+raw,Chicken,5,19,True,borderline
+raw,Paneer,5,4,True,ok
+raw,Potato,0,20,False,borderline
+cooked,Manchurian,16,17,True,not_ok
+cooked,Roti,19,22,True,not_ok
+cooked,Idli,0,24,True,borderline
+raw,Mutton,3,10,True,ok
+cooked,Grilled Fish,12,20,True,not_ok
+raw,Chickpeas,5,5,False,ok
+cooked,Manchurian,17,20,False,not_ok
+cooked,Chocolate Cake,6,23,False,borderline
+cooked,Pasta,24,8,True,not_ok
+cooked,Chocolate Cake,0,22,True,borderline
+raw,Cheese,0,22,True,borderline
+raw,Chickpeas,0,20,True,borderline
+cooked,Fried Rice,9,27,True,borderline
+cooked,Paneer Butter Masala,23,20,True,not_ok
+raw,Cheese,0,25,False,borderline
+raw,Prawns,0,20,False,borderline
+raw,Broccoli,5,19,False,borderline
+cooked,Pizza,16,4,False,not_ok
+cooked,Grilled Fish,22,23,True,not_ok
+cooked,Pastry,17,7,True,not_ok
+cooked,Biryani,19,4,True,not_ok
+cooked,Milkshake,18,7,False,not_ok
+cooked,Noodles,11,20,False,borderline
+raw,Wheat,0,25,False,borderline
+cooked,Idli,5,4,True,borderline
+raw,Mutton,1,6,False,ok
+raw,Grapes,0,7,False,ok
+cooked,Samosa,5,25,False,borderline
+raw,Rice,1,24,False,not_ok
+raw,Apple,0,22,False,borderline
+raw,Milk,0,8,False,ok
+cooked,Noodles,24,4,True,not_ok
+raw,Cheese,0,22,True,borderline
+cooked,Roti,20,3,True,not_ok
+raw,Cheese,0,25,False,borderline
+cooked,Prawns Curry,18,30,True,not_ok
+raw,Paneer,5,4,True,ok
+cooked,Pizza,16,4,False,not_ok
+raw,Mutton,0,25,False,not_ok
+raw,Fish,0,1,True,ok
+raw,Carrot,0,25,False,not_ok
+cooked,Tea,2,5,False,ok
+cooked,Roti,24,20,True,not_ok
+raw,Onion,5,10,True,ok
+cooked,Roti,13,22,True,borderline
+cooked,Chocolate Cake,5,24,True,borderline
+cooked,Dal Tadka,12,23,True,borderline
+cooked,Ice Cream,13,20,False,borderline
+cooked,Grilled Fish,24,8,True,not_ok
+raw,Fish,0,20,False,borderline
+raw,Milk,0,26,True,not_ok
+cooked,Fried Rice,11,25,False,borderline
+raw,Spinach,0,20,False,borderline
+cooked,Roti,8,26,True,borderline
+cooked,Pizza,4,21,False,borderline
+raw,Cheese,3,2,True,ok
+cooked,Grilled Fish,17,23,False,not_ok
+raw,Chickpeas,0,20,False,borderline
+raw,Apple,0,19,True,borderline
+raw,Spinach,0,20,False,borderline
+raw,Grapes,0,7,False,ok
+raw,Chicken,0,19,True,borderline
+cooked,Samosa,21,8,True,not_ok
+cooked,Ice Cream,11,20,True,borderline
+cooked,Milkshake,15,13,False,not_ok
+raw,Chickpeas,0,8,False,ok
+raw,Broccoli,5,6,True,borderline
+cooked,Chocolate Cake,5,24,True,borderline
+raw,Banana,3,9,True,borderline
+cooked,Coffee,26,7,False,not_ok
+cooked,Dosa,5,22,True,borderline
+cooked,Fried Rice,9,27,True,borderline
+cooked,Grilled Fish,22,23,True,not_ok
+raw,Prawns,2,5,False,borderline
+raw,Cabbage,1,18,False,borderline
+cooked,Dal Tadka,2,20,True,borderline
+raw,Fish,0,4,False,ok
+cooked,Samosa,25,3,True,not_ok
+raw,Mutton,0,8,False,ok
+raw,Grapes,0,25,False,borderline
+cooked,Manchurian,13,9,False,borderline
+raw,Rice,0,25,False,borderline
+cooked,Pizza,20,7,True,not_ok
+raw,Apple,0,8,False,ok
+raw,Cheese,3,10,True,ok
+cooked,Manchurian,18,1,False,not_ok
+cooked,Pizza,16,4,False,not_ok
+cooked,Paneer Butter Masala,23,20,True,not_ok
+raw,Chickpeas,2,22,False,borderline
+raw,Cabbage,4,21,True,borderline
+raw,Banana,4,6,False,ok
+cooked,Tea,5,24,False,borderline
+cooked,Milkshake,14,4,True,not_ok
+cooked,Paneer Butter Masala,16,27,True,not_ok
+cooked,Pizza,16,4,False,not_ok
 cooked,Juice,12,19,False,borderline
+raw,Milk,0,20,False,borderline
+cooked,Prawns Curry,1,4,False,ok
+cooked,Manchurian,12,18,True,not_ok
+cooked,Roti,24,20,True,not_ok
+cooked,Biryani,22,26,True,not_ok
+cooked,Tea,11,13,True,borderline
+raw,Chickpeas,0,20,False,borderline
+raw,Wheat,0,20,False,borderline
+cooked,Ice Cream,17,28,False,not_ok
+cooked,Ice Cream,12,6,False,not_ok
+cooked,Tea,11,13,True,borderline
+cooked,Biryani,23,26,False,not_ok
+raw,Egg,3,6,True,ok
+cooked,Grilled Fish,21,29,True,not_ok
+cooked,Dal Tadka,11,23,False,borderline
+raw,Spinach,0,18,False,borderline
+cooked,Juice,17,25,False,not_ok
+cooked,Chocolate Cake,2,25,False,borderline
+raw,Onion,0,9,True,ok
+cooked,Noodles,24,4,True,not_ok
+raw,Wheat,5,25,True,borderline
+raw,Onion,1,11,False,ok
+cooked,Manchurian,12,20,True,not_ok
+raw,Paneer,0,4,False,ok
+cooked,Pizza,20,7,True,not_ok
+cooked,Fried Rice,19,19,False,not_ok
+raw,Grapes,0,25,True,borderline
+raw,Cheese,5,13,False,ok
+raw,Cheese,4,24,False,borderline
+cooked,Chocolate Cake,3,6,True,ok
+raw,Chickpeas,0,8,False,ok
+raw,Cheese,4,9,False,ok
+raw,Cabbage,0,20,False,borderline
+cooked,Tea,11,11,True,borderline
+cooked,Samosa,25,3,True,not_ok
+cooked,Biryani,23,25,True,not_ok
+raw,Chickpeas,5,9,False,ok
+cooked,Pasta,19,8,True,not_ok
+raw,Broccoli,0,4,False,borderline
+raw,Milk,0,25,False,not_ok
+raw,Banana,3,12,False,ok
+cooked,Samosa,22,8,True,not_ok
+cooked,Idli,15,28,True,not_ok
+cooked,Ice Cream,14,8,False,not_ok
+cooked,Chocolate Cake,3,2,False,ok
+cooked,Coffee,23,8,True,not_ok
+cooked,Roti,7,25,False,borderline
+cooked,Fried Rice,18,4,True,not_ok
+cooked,Noodles,14,19,True,borderline
+cooked,Ice Cream,12,6,False,not_ok
+cooked,Biryani,11,10,False,borderline
+raw,Cheese,0,24,True,borderline
+cooked,Dosa,23,30,True,not_ok
+cooked,Fried Rice,19,19,False,not_ok
+raw,Wheat,0,25,False,borderline
+raw,Spinach,3,9,True,ok
+cooked,Grilled Fish,28,29,False,not_ok
+raw,Chickpeas,0,9,True,ok
+cooked,Samosa,11,4,False,borderline
+cooked,Chocolate Cake,6,23,False,borderline
+raw,Orange,3,22,True,borderline
+cooked,Fried Rice,1,4,False,ok
+raw,Broccoli,0,20,False,borderline
+raw,Carrot,0,25,False,not_ok
+raw,Chickpeas,3,10,True,ok
+cooked,Paneer Butter Masala,13,25,True,not_ok
+raw,Orange,0,24,True,borderline
+raw,Orange,0,22,True,borderline
+cooked,Chocolate Cake,21,30,True,not_ok
+cooked,Dosa,6,8,False,ok
+raw,Egg,0,4,False,ok
+raw,Apple,0,19,True,borderline
+cooked,Grilled Fish,22,23,True,not_ok
+cooked,Idli,3,22,True,borderline
+cooked,Idli,5,4,True,borderline
+cooked,Burger,2,6,False,ok
+cooked,Pizza,23,8,True,not_ok
+raw,Chickpeas,5,5,False,ok
+raw,Cabbage,0,21,False,borderline
+raw,Prawns,0,8,False,borderline
+cooked,Prawns Curry,11,4,True,borderline
+raw,Wheat,5,25,True,borderline
+raw,Chicken,5,19,True,borderline
+cooked,Pizza,23,8,True,not_ok
+cooked,Manchurian,16,28,True,not_ok
+raw,Paneer,4,4,False,ok
+cooked,Pastry,12,4,True,not_ok
+cooked,Fried Rice,16,2,False,not_ok
+raw,Prawns,0,8,False,ok
+raw,Milk,1,9,False,ok
+cooked,Samosa,22,10,False,not_ok
+cooked,Samosa,12,25,True,borderline
+cooked,Dosa,21,9,True,not_ok
+cooked,Grilled Fish,3,24,False,borderline
+cooked,Juice,12,8,False,not_ok
+raw,Mutton,0,12,True,ok
+cooked,Grilled Fish,7,28,False,borderline
+raw,Broccoli,4,17,False,borderline
+cooked,Idli,14,4,False,not_ok
+cooked,Chocolate Cake,1,20,True,borderline
+raw,Orange,0,24,True,borderline
+cooked,Dal Tadka,3,24,False,borderline
+cooked,Pasta,15,8,True,not_ok
+raw,Grapes,0,8,True,ok
+raw,Broccoli,4,7,True,ok
+cooked,Manchurian,13,9,False,borderline
+raw,Paneer,0,4,False,ok
+cooked,Paneer Butter Masala,13,25,True,not_ok
+cooked,Manchurian,8,4,True,borderline
+cooked,Fried Rice,9,27,True,borderline
+raw,Spinach,2,19,False,borderline
+raw,Spinach,3,20,True,borderline
+raw,Cabbage,0,21,False,borderline
+cooked,Dosa,25,7,False,not_ok
+cooked,Manchurian,17,8,True,not_ok
+raw,Apple,0,12,False,ok
+raw,Apple,0,7,False,borderline
+cooked,Pasta,17,9,True,not_ok
+raw,Cheese,0,22,True,borderline
+cooked,Chocolate Cake,4,25,False,borderline
+cooked,Roti,10,4,True,borderline
+cooked,Dal Tadka,7,25,False,borderline
+raw,Paneer,0,8,False,ok
+raw,Paneer,0,8,False,ok
+cooked,Paneer Butter Masala,13,26,False,not_ok
+cooked,Grilled Fish,22,23,True,not_ok
+cooked,Juice,22,26,True,not_ok
+raw,Spinach,1,22,True,borderline
+raw,Rice,2,23,True,not_ok
+raw,Prawns,2,5,False,borderline
+raw,Banana,0,4,False,borderline
+cooked,Samosa,22,5,True,not_ok
+cooked,Dal Tadka,13,19,True,borderline
+raw,Banana,4,6,False,ok
+raw,Cheese,0,25,False,borderline
+raw,Tomato,3,23,True,not_ok
+cooked,Grilled Fish,5,26,False,borderline
+cooked,Biryani,24,26,True,not_ok
+raw,Prawns,5,7,True,ok
+cooked,Biryani,20,9,True,not_ok
+raw,Chicken,0,23,True,not_ok
+raw,Apple,2,22,False,borderline
+raw,Carrot,5,30,False,not_ok
+cooked,Grilled Fish,28,29,False,not_ok
+cooked,Coffee,14,4,False,borderline
+raw,Orange,4,23,True,borderline
+raw,Chickpeas,3,7,False,ok
+cooked,Pizza,6,20,True,borderline
+cooked,Milkshake,14,8,False,not_ok
+cooked,Idli,7,7,True,borderline
+raw,Broccoli,4,7,True,ok
+cooked,Burger,8,11,False,ok
+cooked,Coffee,4,20,True,borderline
+cooked,Paneer Butter Masala,16,27,True,not_ok
+cooked,Tea,5,24,False,borderline
+cooked,Manchurian,12,18,True,not_ok
+raw,Broccoli,0,4,True,borderline
+cooked,Grilled Fish,8,4,False,borderline
+cooked,Tea,3,8,True,ok
+cooked,Fried Rice,3,28,True,borderline
+cooked,Fried Rice,6,17,False,borderline
+raw,Cheese,5,22,False,borderline
+cooked,Idli,2,8,True,ok
+cooked,Tea,16,13,False,borderline
+raw,Carrot,0,25,False,not_ok
+cooked,Biryani,22,29,False,not_ok
+raw,Egg,3,6,True,ok
+raw,Grapes,0,26,True,borderline
+raw,Apple,0,20,False,borderline
+cooked,Biryani,18,4,True,not_ok
+raw,Cheese,0,7,True,ok
+raw,Apple,0,22,False,borderline
+cooked,Chocolate Cake,5,24,True,borderline
+raw,Carrot,4,20,False,borderline
+cooked,Chocolate Cake,19,22,False,not_ok
+raw,Prawns,5,18,False,borderline
+cooked,Dal Tadka,2,20,True,borderline
+cooked,Paneer Butter Masala,23,25,True,not_ok
+cooked,Pizza,16,4,False,not_ok
+cooked,Roti,9,23,True,borderline
+cooked,Pastry,12,4,True,not_ok
+cooked,Grilled Fish,5,26,False,borderline
+cooked,Dal Tadka,11,23,False,borderline
+cooked,Coffee,23,8,True,not_ok
+cooked,Paneer Butter Masala,23,20,True,not_ok
+raw,Chicken,4,17,True,borderline
+cooked,Fried Rice,17,3,False,not_ok
+raw,Cheese,4,24,False,borderline
+raw,Banana,2,9,True,ok
+raw,Cabbage,3,4,True,ok
+cooked,Samosa,10,23,True,borderline
+raw,Rice,0,25,False,not_ok
+raw,Chickpeas,0,9,False,ok
+cooked,Biryani,11,10,False,borderline
+cooked,Burger,8,11,False,ok
+cooked,Chocolate Cake,23,11,True,not_ok
+cooked,Noodles,6,8,True,borderline
+cooked,Roti,6,20,True,borderline
+raw,Apple,0,7,False,borderline
+raw,Carrot,2,29,True,not_ok
+raw,Rice,4,26,False,not_ok
+raw,Broccoli,5,19,False,borderline
+cooked,Idli,14,4,False,not_ok
+cooked,Biryani,19,2,True,not_ok
+cooked,Dal Tadka,4,25,False,borderline
+cooked,Idli,4,23,False,borderline
+cooked,Fried Rice,19,26,False,not_ok
+cooked,Chocolate Cake,3,6,True,ok
+cooked,Samosa,3,21,False,borderline
+cooked,Grilled Fish,12,20,True,not_ok
+raw,Paneer,0,4,False,ok
+cooked,Pizza,16,4,False,not_ok
+raw,Carrot,2,29,True,not_ok
+cooked,Grilled Fish,7,25,False,borderline
+cooked,Manchurian,21,8,False,not_ok
+raw,Onion,0,10,False,ok
+cooked,Samosa,21,7,False,not_ok
+raw,Potato,0,20,False,borderline
+cooked,Grilled Fish,12,20,True,not_ok
+cooked,Manchurian,8,5,True,borderline
+raw,Paneer,0,4,False,ok
+raw,Egg,0,20,False,borderline
+raw,Cabbage,0,25,True,borderline
+cooked,Dosa,23,25,True,not_ok
+cooked,Ice Cream,19,25,True,not_ok
+cooked,Roti,13,22,True,borderline
+cooked,Paneer Butter Masala,13,26,False,not_ok
+cooked,Manchurian,16,28,True,not_ok
+raw,Lentils,0,25,False,borderline
+raw,Carrot,0,25,False,not_ok
+cooked,Pastry,15,7,True,not_ok
+cooked,Fried Rice,8,27,True,borderline
+cooked,Roti,6,20,False,borderline
+cooked,Dal Tadka,17,2,True,not_ok
+raw,Prawns,0,20,False,borderline
+cooked,Dosa,1,8,True,ok
+raw,Carrot,0,23,False,borderline
+cooked,Manchurian,12,18,True,not_ok
+raw,Grapes,0,7,False,ok
+raw,Banana,0,4,False,ok
+raw,Cheese,0,4,False,ok
+cooked,Pasta,27,5,False,not_ok
+cooked,Pizza,6,20,True,borderline
+raw,Banana,0,4,False,borderline
+raw,Wheat,5,25,True,borderline
+cooked,Manchurian,16,28,True,not_ok
+cooked,Grilled Fish,5,20,False,borderline
+cooked,Juice,19,27,False,not_ok
+raw,Banana,0,4,False,ok
+raw,Spinach,0,20,False,borderline
+raw,Milk,0,8,False,ok
+cooked,Pizza,7,18,True,borderline
+cooked,Manchurian,17,28,True,not_ok
+cooked,Juice,16,30,True,not_ok
+raw,Chicken,0,19,True,borderline
+cooked,Biryani,11,10,False,borderline
+cooked,Dal Tadka,24,18,True,not_ok
+cooked,Idli,3,22,True,borderline
+cooked,Samosa,8,24,True,borderline
+cooked,Fried Rice,6,21,False,borderline
+raw,Cabbage,3,4,True,ok
+cooked,Chocolate Cake,10,24,True,not_ok
+raw,Paneer,0,4,False,borderline
+cooked,Idli,2,8,False,ok
+raw,Chickpeas,4,18,False,borderline
+cooked,Manchurian,16,17,True,not_ok
+raw,Rice,4,26,False,not_ok
+raw,Cabbage,0,4,False,ok
+cooked,Milkshake,23,8,True,not_ok
+raw,Potato,0,4,False,ok
+cooked,Prawns Curry,2,9,False,ok
+raw,Paneer,0,4,False,ok
+cooked,Tea,11,8,False,borderline
+cooked,Biryani,21,7,False,not_ok
+cooked,Biryani,23,25,True,not_ok
+cooked,Pasta,27,5,False,not_ok
+cooked,Manchurian,13,9,False,borderline
+cooked,Fried Rice,16,2,False,not_ok
+cooked,Pizza,23,8,True,not_ok
+cooked,Prawns Curry,16,24,True,not_ok
+raw,Milk,0,10,True,ok
+raw,Cheese,5,26,True,borderline
+cooked,Tea,6,28,True,borderline
+cooked,Chocolate Cake,9,8,False,borderline
+raw,Lentils,0,21,False,borderline
+cooked,Tea,8,6,True,ok
+cooked,Coffee,23,8,True,not_ok
+raw,Mutton,0,11,True,ok
+cooked,Prawns Curry,1,4,False,ok
+raw,Onion,0,12,False,ok
+raw,Chicken,4,17,True,borderline
+raw,Mutton,5,29,True,not_ok
+raw,Prawns,0,8,False,borderline
+cooked,Dal Tadka,22,20,True,not_ok
+cooked,Pizza,23,8,True,not_ok
+cooked,Idli,7,7,True,borderline
+raw,Cheese,4,9,False,ok
+cooked,Idli,3,2,True,borderline
+cooked,Biryani,23,25,True,not_ok
+raw,Apple,0,8,False,ok
+raw,Wheat,0,20,False,borderline
+raw,Banana,0,4,True,borderline
+raw,Cheese,0,24,False,borderline
+raw,Orange,0,30,True,borderline
+raw,Carrot,4,20,False,borderline
+cooked,Roti,20,3,True,not_ok
+cooked,Grilled Fish,22,23,True,not_ok
+raw,Chickpeas,1,5,True,ok
+cooked,Tea,12,7,True,borderline
+cooked,Manchurian,17,18,False,not_ok
+cooked,Paneer Butter Masala,13,25,True,not_ok
+raw,Broccoli,5,19,False,borderline
+raw,Cheese,0,24,True,borderline
+raw,Cabbage,2,5,True,ok
+raw,Broccoli,0,4,False,borderline
+cooked,Manchurian,16,17,True,not_ok
+raw,Paneer,4,4,False,ok
+raw,Cheese,3,10,True,ok
+cooked,Ice Cream,17,28,False,not_ok
+raw,Wheat,5,24,False,borderline
+raw,Orange,0,24,True,borderline
+cooked,Pasta,19,8,True,not_ok
+cooked,Coffee,4,20,True,borderline
+raw,Fish,2,21,False,borderline
+raw,Carrot,0,25,True,not_ok
+raw,Cheese,5,13,False,ok
+raw,Egg,0,20,False,borderline
+raw,Cheese,3,10,True,ok
+cooked,Chocolate Cake,2,4,True,ok
+raw,Chicken,0,25,False,borderline
+cooked,Tea,8,6,True,ok
+raw,Carrot,4,20,False,borderline
+cooked,Tea,3,8,True,ok
+cooked,Manchurian,17,28,True,not_ok
+cooked,Ice Cream,14,8,False,not_ok
+raw,Mutton,0,23,True,borderline
+raw,Apple,0,4,False,borderline
+raw,Prawns,0,5,False,borderline
+cooked,Burger,3,8,False,ok
+raw,Wheat,1,29,False,borderline
+raw,Mutton,0,25,False,borderline
+raw,Banana,2,8,False,ok
+cooked,Chocolate Cake,2,21,True,borderline
+cooked,Biryani,2,8,False,ok
+raw,Cabbage,1,18,False,borderline
+cooked,Manchurian,12,18,True,not_ok
+raw,Onion,2,6,False,ok
+raw,Carrot,0,26,False,not_ok
+cooked,Biryani,22,26,True,not_ok
+raw,Cheese,1,21,True,borderline
+raw,Fish,0,20,False,borderline
+cooked,Fried Rice,18,5,False,not_ok
+raw,Broccoli,2,6,True,ok
+cooked,Fried Rice,1,4,False,ok
+raw,Lentils,0,20,False,borderline
+raw,Fish,4,25,False,borderline
+raw,Paneer,0,4,False,ok
+raw,Grapes,0,8,False,ok
+raw,Wheat,4,18,False,borderline
+raw,Carrot,0,19,False,borderline
+cooked,Roti,6,20,True,borderline
+cooked,Samosa,10,26,False,borderline
+cooked,Manchurian,16,4,True,not_ok
+raw,Cabbage,3,4,True,ok
+cooked,Paneer Butter Masala,23,25,True,not_ok
+cooked,Chocolate Cake,2,21,True,borderline
+cooked,Pizza,8,11,True,borderline
+cooked,Coffee,15,8,True,not_ok
+cooked,Pizza,16,4,False,not_ok
+cooked,Samosa,8,24,True,borderline
+cooked,Fried Rice,22,19,False,not_ok
+cooked,Dosa,10,23,True,borderline
+cooked,Manchurian,18,1,False,not_ok
+raw,Milk,0,10,True,ok
+cooked,Samosa,28,22,False,not_ok
+raw,Chickpeas,0,7,True,ok
+cooked,Roti,10,4,True,borderline
+cooked,Samosa,21,7,False,not_ok
+cooked,Fried Rice,6,4,False,ok
+cooked,Pasta,26,5,True,not_ok
+cooked,Dal Tadka,11,20,False,borderline
+raw,Mutton,0,25,False,borderline
+raw,Grapes,0,25,False,borderline
+raw,Chickpeas,0,8,False,ok
+raw,Prawns,5,18,False,borderline
+cooked,Chocolate Cake,9,8,False,borderline
+cooked,Samosa,22,8,True,not_ok
+raw,Cheese,4,9,False,ok
+cooked,Samosa,26,22,True,not_ok
+cooked,Dosa,27,28,True,not_ok
+cooked,Samosa,12,25,True,borderline
+cooked,Dosa,8,25,True,borderline
+cooked,Tea,8,6,True,ok
+cooked,Fried Rice,17,25,True,not_ok
+raw,Orange,0,25,False,borderline
+raw,Apple,0,12,False,ok
+cooked,Chocolate Cake,1,20,True,borderline
+raw,Potato,4,6,False,ok
+cooked,Coffee,24,10,False,not_ok
+cooked,Ice Cream,11,20,True,borderline
+raw,Prawns,0,8,False,ok
+cooked,Noodles,11,7,True,borderline
+cooked,Coffee,14,4,False,borderline
+raw,Wheat,0,25,False,borderline
+raw,Milk,4,5,False,ok
+raw,Lentils,3,22,False,borderline
+raw,Milk,0,26,True,not_ok
+cooked,Manchurian,17,20,False,not_ok
+raw,Chickpeas,0,22,True,borderline
+raw,Carrot,1,22,False,not_ok
+raw,Orange,0,30,True,borderline
+raw,Chicken,1,18,False,borderline
+raw,Apple,0,20,False,borderline
+cooked,Dal Tadka,3,24,False,borderline
+raw,Broccoli,0,20,False,borderline
+raw,Milk,0,8,False,ok
+cooked,Noodles,11,7,True,borderline
+raw,Mutton,0,8,False,ok
+cooked,Chocolate Cake,4,17,False,borderline
+cooked,Dal Tadka,3,24,False,borderline
+raw,Mutton,0,12,True,ok
+cooked,Idli,19,2,False,not_ok
+cooked,Pastry,12,9,True,not_ok
+cooked,Idli,12,25,True,not_ok
+cooked,Dosa,5,22,True,borderline
+cooked,Chocolate Cake,4,17,False,borderline
+raw,Chickpeas,3,12,False,ok
+raw,Egg,0,4,False,ok
+cooked,Samosa,21,8,True,not_ok
+cooked,Pizza,10,8,True,borderline
+raw,Lentils,0,25,False,borderline
+cooked,Prawns Curry,17,25,True,not_ok
+raw,Cabbage,0,20,False,borderline
+raw,Milk,0,26,True,not_ok
+raw,Fish,2,21,False,borderline
+raw,Onion,0,12,False,ok
+raw,Paneer,0,4,False,ok
+cooked,Burger,6,11,True,ok
+cooked,Samosa,11,4,False,borderline
+raw,Cheese,1,21,True,borderline
+cooked,Roti,17,17,False,not_ok
+cooked,Tea,11,8,False,borderline
+cooked,Milkshake,14,8,False,not_ok
+cooked,Chocolate Cake,18,8,False,not_ok
+cooked,Dal Tadka,11,23,False,borderline
+raw,Milk,0,8,False,ok
+cooked,Fried Rice,17,25,True,not_ok
+raw,Fish,4,25,False,borderline
+cooked,Noodles,8,9,False,borderline
+raw,Cheese,4,25,False,borderline
+raw,Onion,0,12,True,ok
+cooked,Fried Rice,17,30,False,not_ok
+raw,Fish,0,20,False,borderline
+raw,Fish,0,20,False,borderline
+raw,Grapes,4,9,True,ok
+raw,Paneer,0,8,False,ok
+cooked,Idli,3,2,True,borderline
+raw,Wheat,0,4,False,borderline
+cooked,Manchurian,16,28,True,not_ok
+cooked,Samosa,22,8,True,not_ok
+raw,Broccoli,5,1,False,borderline
+cooked,Fried Rice,1,4,False,ok
+cooked,Pizza,20,8,False,not_ok
+cooked,Burger,2,6,False,ok
+cooked,Fried Rice,19,19,False,not_ok
+cooked,Prawns Curry,3,2,False,ok
+cooked,Dosa,10,23,True,borderline
+raw,Paneer,4,4,False,ok
+cooked,Samosa,28,22,False,not_ok
+raw,Broccoli,5,19,False,borderline
+cooked,Roti,8,7,True,borderline
+raw,Chickpeas,5,5,False,ok
+raw,Apple,0,8,False,ok
+cooked,Burger,6,11,True,ok
+raw,Chickpeas,0,8,False,ok
+raw,Carrot,0,20,False,borderline
+cooked,Pastry,12,9,True,not_ok
+cooked,Paneer Butter Masala,13,25,True,not_ok
+cooked,Samosa,23,4,False,not_ok
+cooked,Grilled Fish,25,27,False,not_ok
+raw,Carrot,0,19,False,borderline
+raw,Egg,0,8,False,ok
+raw,Chickpeas,3,10,True,ok
+raw,Onion,0,8,False,ok
+cooked,Dal Tadka,17,4,False,not_ok
+raw,Cheese,3,22,True,borderline
+cooked,Pizza,5,25,True,borderline
+raw,Cheese,0,8,False,ok
+raw,Mutton,1,29,False,not_ok
+cooked,Chocolate Cake,2,4,True,ok
+raw,Rice,1,24,False,not_ok
+cooked,Manchurian,12,18,True,not_ok
+cooked,Dosa,23,30,True,not_ok
+raw,Chickpeas,0,22,True,borderline
+raw,Spinach,0,18,False,borderline
+raw,Egg,0,8,False,ok
+raw,Cabbage,2,5,True,ok
+raw,Cabbage,0,21,False,borderline
+cooked,Roti,9,25,True,borderline
+raw,Chickpeas,0,8,False,ok
+raw,Paneer,4,6,False,ok
+raw,Onion,0,9,True,ok
+raw,Chicken,0,19,True,borderline
+raw,Cheese,3,2,True,ok
+raw,Cabbage,2,5,True,ok
+cooked,Chocolate Cake,23,11,True,not_ok
+cooked,Juice,13,7,True,not_ok
+raw,Grapes,0,8,False,ok
+cooked,Chocolate Cake,17,25,False,not_ok
+cooked,Fried Rice,15,19,False,not_ok
+raw,Grapes,5,6,False,ok
+raw,Onion,0,12,False,ok
+raw,Prawns,4,9,False,borderline
+cooked,Chocolate Cake,3,6,True,ok
+cooked,Burger,6,25,False,borderline
+cooked,Dal Tadka,2,20,True,borderline
+cooked,Ice Cream,24,22,True,not_ok
+cooked,Biryani,25,23,False,not_ok
+cooked,Roti,9,25,True,borderline
+raw,Paneer,0,4,False,ok
+cooked,Samosa,10,23,True,borderline
+cooked,Chocolate Cake,13,22,False,not_ok
+cooked,Pasta,15,8,True,not_ok
+raw,Cabbage,0,21,False,borderline
+cooked,Tea,11,8,False,borderline
+raw,Paneer,0,10,True,ok
+raw,Mutton,0,25,False,borderline
+raw,Cheese,4,24,False,borderline
+cooked,Pizza,22,13,False,not_ok
+cooked,Grilled Fish,7,25,False,borderline
+raw,Onion,5,10,True,ok
+cooked,Chocolate Cake,19,22,False,not_ok
+raw,Paneer,0,4,False,ok
+raw,Broccoli,5,19,False,borderline
+raw,Egg,0,20,False,borderline
+raw,Grapes,0,8,False,ok
+cooked,Chocolate Cake,18,8,False,not_ok
+cooked,Milkshake,23,8,True,not_ok
+cooked,Chocolate Cake,18,8,False,not_ok
+raw,Cheese,3,2,True,ok
+cooked,Dosa,8,25,True,borderline
+cooked,Fried Rice,15,19,False,not_ok
+raw,Chicken,4,17,True,borderline
+raw,Tomato,0,25,True,not_ok
+cooked,Dosa,12,23,False,borderline
+cooked,Fried Rice,23,1,False,not_ok
+cooked,Grilled Fish,28,29,False,not_ok
+cooked,Manchurian,18,1,False,not_ok
+cooked,Dosa,23,30,True,not_ok
+cooked,Samosa,10,26,False,borderline
+raw,Paneer,1,1,True,ok
+raw,Tomato,0,28,True,not_ok
+cooked,Dosa,14,5,True,not_ok
+raw,Onion,5,7,True,ok
+cooked,Pasta,17,9,True,not_ok
+raw,Chickpeas,0,7,True,ok
+cooked,Coffee,15,8,True,borderline
+cooked,Chocolate Cake,5,24,True,borderline
+cooked,Fried Rice,0,3,True,ok
+raw,Prawns,0,25,False,not_ok
+cooked,Manchurian,17,20,False,not_ok
+raw,Prawns,2,5,False,borderline
+raw,Chickpeas,3,10,True,ok
+cooked,Samosa,26,22,True,not_ok
+raw,Chickpeas,3,10,True,ok
+cooked,Paneer Butter Masala,16,27,True,not_ok
+cooked,Grilled Fish,5,26,False,borderline
+raw,Cheese,0,8,False,borderline
+raw,Chickpeas,1,22,True,borderline
+cooked,Samosa,11,23,True,borderline
+cooked,Pastry,19,4,True,not_ok
+raw,Orange,0,30,True,borderline
+cooked,Roti,9,23,True,borderline
+cooked,Paneer Butter Masala,13,26,False,not_ok
+cooked,Coffee,11,4,True,borderline
+cooked,Paneer Butter Masala,12,29,False,not_ok
+cooked,Idli,0,7,True,ok
+raw,Apple,0,20,False,borderline
+raw,Orange,0,25,False,borderline
+raw,Milk,0,27,True,not_ok
+raw,Prawns,0,8,False,ok
+raw,Chickpeas,0,18,True,borderline
+cooked,Dal Tadka,12,23,True,borderline
+cooked,Ice Cream,13,11,False,not_ok
+cooked,Tea,12,7,True,borderline
+cooked,Grilled Fish,5,20,False,borderline
+cooked,Ice Cream,13,20,False,borderline
+raw,Cheese,0,8,False,ok
+cooked,Dal Tadka,3,24,False,borderline
+cooked,Biryani,23,25,True,not_ok
+cooked,Pizza,19,9,True,not_ok
+cooked,Samosa,28,22,False,not_ok
+cooked,Milkshake,16,3,False,not_ok
+cooked,Chocolate Cake,10,10,False,borderline
+raw,Prawns,0,8,False,ok
+cooked,Fried Rice,3,4,True,ok
+raw,Chickpeas,1,5,True,ok
+raw,Spinach,0,4,False,ok
+raw,Chickpeas,0,8,False,ok
+raw,Wheat,2,25,True,borderline
+cooked,Chocolate Cake,9,8,False,borderline
+cooked,Tea,3,8,True,ok
+raw,Chickpeas,5,9,False,ok
+raw,Paneer,1,1,True,ok
+raw,Mutton,4,10,True,ok
+raw,Cheese,0,8,False,ok
+cooked,Samosa,8,24,True,borderline
+raw,Wheat,5,24,False,borderline
+raw,Mutton,1,6,False,ok
+cooked,Biryani,24,26,True,not_ok
+raw,Fish,0,20,False,borderline
+raw,Paneer,0,6,True,ok
+raw,Rice,4,28,True,not_ok
+raw,Grapes,0,25,False,borderline
+cooked,Chocolate Cake,1,20,True,borderline
+cooked,Pizza,6,20,True,borderline
+raw,Paneer,2,8,True,ok
+raw,Chickpeas,0,9,False,ok
+cooked,Tea,11,11,True,borderline
+raw,Prawns,2,13,False,borderline
+cooked,Grilled Fish,28,29,False,not_ok
+raw,Banana,0,2,False,ok
+raw,Mutton,4,10,True,ok
+cooked,Juice,24,1,True,not_ok
+raw,Chickpeas,0,18,True,borderline
+cooked,Fried Rice,17,25,True,not_ok
+cooked,Grilled Fish,7,28,False,borderline
+raw,Cabbage,1,5,True,ok
+raw,Milk,4,5,False,ok
+raw,Spinach,4,22,False,borderline
+raw,Cheese,0,7,True,ok
+cooked,Pizza,20,1,True,not_ok
+raw,Cheese,0,8,False,borderline
+cooked,Dal Tadka,17,2,True,not_ok
+raw,Cabbage,1,18,False,borderline
+raw,Paneer,4,4,False,ok
+cooked,Coffee,27,11,True,not_ok
+raw,Paneer,1,1,True,ok
+cooked,Chocolate Cake,6,23,False,borderline
+raw,Cabbage,4,21,True,borderline
+raw,Orange,0,30,True,borderline
+cooked,Pizza,9,5,False,borderline
+cooked,Biryani,23,26,False,not_ok
+raw,Spinach,0,20,False,borderline
+cooked,Fried Rice,1,4,False,ok
+raw,Paneer,0,7,False,ok
+raw,Chickpeas,0,8,False,ok
+cooked,Chocolate Cake,10,10,False,borderline
+cooked,Ice Cream,13,11,False,not_ok
+raw,Paneer,0,4,False,borderline
+cooked,Samosa,22,10,False,not_ok
+cooked,Dosa,23,25,True,not_ok
+cooked,Dosa,21,4,True,not_ok
+cooked,Manchurian,17,18,False,not_ok
+cooked,Coffee,27,11,True,not_ok
+raw,Prawns,0,6,True,borderline
+cooked,Fried Rice,18,10,False,not_ok

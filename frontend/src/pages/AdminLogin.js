@@ -16,7 +16,10 @@ export default function AdminLogin() {
     e.preventDefault();
     setError("");
 
-    if (email === DEMO_EMAIL && password === DEMO_PASSWORD) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+
+    if (normalizedEmail === DEMO_EMAIL.toLowerCase() && normalizedPassword === DEMO_PASSWORD) {
       localStorage.setItem("isAdmin", "true");
       navigate("/admin", { replace: true });
     } else {

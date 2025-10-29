@@ -15,18 +15,28 @@ import {
 import './ReceiverDashboard.css';
 import { getAvailableDonations, acceptDonation as acceptDonationApi, markReceived as markReceivedApi } from '../services/donationApi';
 import MapSection from '../components/MapSection';
+import MapDistanceModal from '../components/MapDistanceModal';
+import { getUser, uploadAvatar } from '../services/usersApi';
 
 const ReceiverDashboard = () => {
   const userName = (typeof window !== 'undefined' && localStorage.getItem('userName')) || (typeof window !== 'undefined' && localStorage.getItem('userEmail')) || 'Receiver';
   const userEmail = (typeof window !== 'undefined' && localStorage.getItem('userEmail')) || '';
   const userRole = (typeof window !== 'undefined' && localStorage.getItem('userRole')) || 'receiver';
   const [profileImage, setProfileImage] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('profileImage') || '';
+    if (typeof window === 'undefined') return '';
+    const role = localStorage.getItem('userRole') || 'receiver';
+    const uid = localStorage.getItem('userId') || '';
+    const key = uid ? `profileImage:${role}:${uid}` : 'profileImage:guest';
+    // migrate old global key once
+    const old = localStorage.getItem('profileImage');
+    const existing = localStorage.getItem(key);
+    if (!existing && old) {
+      try { localStorage.setItem(key, old); } catch (_) {}
     }
-    return '';
+    return localStorage.getItem(key) || '';
   });
   const [isUploading, setIsUploading] = useState(false);
+  const [theme, setTheme] = useState(() => (typeof window !== 'undefined' && localStorage.getItem('theme')) || 'light');
   
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -42,20 +52,36 @@ const ReceiverDashboard = () => {
     }
   };
 
-  const handleProfileImageChange = (e) => {
+  // Apply theme to document root and persist
+  useEffect(() => {
+    try {
+      if (typeof document !== 'undefined') {
+        const root = document.documentElement;
+        if (theme === 'dark') root.classList.add('dark'); else root.classList.remove('dark');
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('theme', theme);
+      }
+    } catch (_) {}
+  }, [theme]);
+
+  const handleProfileImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
+    const uid = (typeof window !== 'undefined' && localStorage.getItem('userId')) || '';
+    const role = (typeof window !== 'undefined' && localStorage.getItem('userRole')) || 'receiver';
+    const key = uid ? `profileImage:${role}:${uid}` : 'profileImage:guest';
+    if (!file || !uid) return;
+    try {
       setIsUploading(true);
-      // In a real app, you would upload the file to your server here
-      // For now, we'll just create a local URL for the image
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result;
-        setProfileImage(imageUrl);
-        localStorage.setItem('profileImage', imageUrl); // Save to localStorage for persistence
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+      const res = await uploadAvatar(uid, file);
+      const url = res?.profileImageUrl || '';
+      if (url) {
+        setProfileImage(url);
+        try { localStorage.setItem(key, url); } catch (_) {}
+      }
+    } catch (_) {
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -75,6 +101,101 @@ const ReceiverDashboard = () => {
   const [loadingAvail, setLoadingAvail] = useState(false);
   const [errorAvail, setErrorAvail] = useState('');
 
+  // Map modal state
+  const [mapOpen, setMapOpen] = useState(false);
+  const [mapOrigin, setMapOrigin] = useState('');
+  const [mapDestination, setMapDestination] = useState('');
+
+  // Receiver stored location (per-user, with consent)
+  const receiverId = (typeof window !== 'undefined' && localStorage.getItem('userId')) || null;
+  const locKey = receiverId ? `receiverLocation:${receiverId}` : null;
+  const consentKey = receiverId ? `receiverLocationConsent:${receiverId}` : null;
+  const askedKey = receiverId ? `receiverLocationAsked:${receiverId}` : null;
+  const [storedLocation, setStoredLocation] = useState('');
+  const [hasConsent, setHasConsent] = useState(false);
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [manualLocation, setManualLocation] = useState('');
+  const [consentChecked, setConsentChecked] = useState(false);
+
+  // Load stored location once per receiver
+  useEffect(() => {
+    try {
+      if (!receiverId) return;
+      const c = consentKey ? localStorage.getItem(consentKey) === 'true' : false;
+      const loc = locKey ? localStorage.getItem(locKey) || '' : '';
+      const asked = askedKey ? localStorage.getItem(askedKey) === 'true' : false;
+      setHasConsent(c);
+      setStoredLocation(loc);
+      // Only auto-prompt once per receiver if they haven't been asked before
+      if (!asked && (!c || !loc)) {
+        setShowLocationPrompt(true);
+        if (askedKey) localStorage.setItem(askedKey, 'true');
+      }
+    } catch (_) {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [receiverId]);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const uid = (typeof window !== 'undefined' && localStorage.getItem('userId')) || '';
+        const role = (typeof window !== 'undefined' && localStorage.getItem('userRole')) || 'receiver';
+        const key = uid ? `profileImage:${role}:${uid}` : 'profileImage:guest';
+        if (!uid) return;
+        const u = await getUser(uid);
+        if (u && u.profileImageUrl) {
+          setProfileImage(u.profileImageUrl);
+          try { localStorage.setItem(key, u.profileImageUrl); } catch (_) {}
+        }
+      } catch (_) {}
+    };
+    loadUser();
+  }, []);
+
+  const saveStoredLocation = (value) => {
+    if (!receiverId || !locKey || !consentKey) return;
+    try {
+      localStorage.setItem(consentKey, 'true');
+      localStorage.setItem(locKey, value);
+      setHasConsent(true);
+      setStoredLocation(value);
+      setShowLocationPrompt(false);
+    } catch (e) {
+      console.error('Failed to store location', e);
+    }
+  };
+
+  const clearStoredLocation = () => {
+    if (!receiverId || !locKey || !consentKey) return;
+    try {
+      localStorage.removeItem(locKey);
+      // keep consent so we don't re-prompt unless user decides to set again
+      setStoredLocation('');
+      // Do not re-show automatically; user can click Change location when they want
+    } catch (e) {
+      console.error('Failed to clear location', e);
+    }
+  };
+
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation not supported. Please enter location manually.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        // Store as "lat,lng" string which Google Maps embed accepts
+        const value = `${pos.coords.latitude},${pos.coords.longitude}`;
+        saveStoredLocation(value);
+      },
+      (err) => {
+        console.warn('Geolocation error', err);
+        alert('Unable to get current location. Please enter it manually.');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   // Load available donations on mount and when switching to browse
   useEffect(() => {
     const load = async () => {
@@ -90,22 +211,20 @@ const ReceiverDashboard = () => {
         setLoadingAvail(false);
       }
     };
-
-  // markAsReceived moved to component scope
+    // markAsReceived moved to component scope
     if (activeTab === 'browse' || activeTab === 'dashboard') {
       load();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const filtered = available
     .filter(d => {
+      // Text search only; show all donations to all receivers
       const term = search.toLowerCase();
-      const donorName = d.donor?.name?.toLowerCase() || '';
       return (
-        d.food?.toLowerCase().includes(term) ||
-        d.location?.toLowerCase().includes(term) ||
-        donorName.includes(term)
+        (d.food || '').toLowerCase().includes(term) ||
+        (d.location || '').toLowerCase().includes(term) ||
+        (d.donor?.name || '').toLowerCase().includes(term)
       );
     });
 
@@ -117,8 +236,8 @@ const ReceiverDashboard = () => {
         return;
       }
       await markReceivedApi(donationId, receiverId);
-      // Remove from accepted list locally
-      setAcceptedDonations((prev) => prev.filter((a) => a.id !== donationId));
+      // Mark as received locally (keep in Connections)
+      setAcceptedDonations((prev) => prev.map((a) => a.id === donationId ? { ...a, receivedAt: new Date() } : a));
       // Refresh available list (in case statuses changed)
       const data = await getAvailableDonations();
       setAvailable(Array.isArray(data) ? data : []);
@@ -136,7 +255,8 @@ const ReceiverDashboard = () => {
         alert('You must be logged in as receiver');
         return;
       }
-      await acceptDonationApi(donation.id, receiverId);
+      const receiverLocation = (storedLocation && storedLocation.trim()) || (prefs.location && prefs.location.trim()) || '';
+      await acceptDonationApi(donation.id, receiverId, receiverLocation || undefined);
       // Update local accepted list
       setAcceptedDonations((prev) => {
         if (prev.some((a) => a.id === donation.id)) return prev;
@@ -150,6 +270,20 @@ const ReceiverDashboard = () => {
       console.error(e);
       alert('Failed to accept donation');
     }
+  };
+
+  // Open map from receiver to donor (component scope)
+  const openMapToDonor = (donorAddress) => {
+    // Use stored location if available; otherwise ask user to set now
+    const originAddr = (storedLocation && storedLocation.trim()) || (prefs.location && prefs.location.trim()) || '';
+    if (!originAddr) {
+      setShowLocationPrompt(true);
+      return;
+    }
+    if (!donorAddress) return;
+    setMapOrigin(originAddr);
+    setMapDestination(donorAddress);
+    setMapOpen(true);
   };
 
   const hasAccepted = (id) => acceptedDonations.some((a) => a.id === id);
@@ -166,7 +300,7 @@ const ReceiverDashboard = () => {
     emailAlerts: true,
     pushAlerts: false,
     maxDistance: 10,
-    theme: 'light',
+    theme: (typeof window !== 'undefined' && localStorage.getItem('theme')) || 'light',
     categories: {
       cooked: true,
       produce: true,
@@ -190,6 +324,20 @@ const ReceiverDashboard = () => {
     console.log('Saving preferences', prefs);
     alert('Settings saved');
   };
+
+  // Keep prefs.theme and global theme state in sync
+  useEffect(() => {
+    setPrefs(p => ({ ...p, theme }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme]);
+
+  // Sync prefs.location with storedLocation for display convenience
+  useEffect(() => {
+    if (storedLocation && !prefs.location) {
+      setPrefs(p => ({ ...p, location: storedLocation }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storedLocation]);
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
@@ -250,6 +398,90 @@ const ReceiverDashboard = () => {
             </div>
           </div>
         );
+      case 'profile':
+        return (
+          <div className="dashboard-content">
+            <h2>Profile</h2>
+            <div className="profile-section" style={{ display: 'flex', gap: '2rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                <div style={{
+                  width: '120px',
+                  height: '120px',
+                  borderRadius: '50%',
+                  backgroundColor: '#e5e7eb',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  border: '3px solid #fff',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                }}>
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      alt="Profile"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '3rem',
+                      color: '#9ca3af'
+                    }}>
+                      <FaUser />
+                    </div>
+                  )}
+                  <label
+                    htmlFor="profile-upload"
+                    style={{
+                      position: 'absolute',
+                      bottom: '0',
+                      right: '0',
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '36px',
+                      height: '36px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                    }}
+                    title="Change profile picture"
+                  >
+                    <FaCog size={16} />
+                    <input
+                      id="profile-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfileImageChange}
+                      style={{ display: 'none' }}
+                      disabled={isUploading}
+                    />
+                  </label>
+                </div>
+                <h3 style={{ margin: '0', color: '#1f2937' }}>{userName}</h3>
+                <p style={{ margin: '0', color: '#6b7280', fontSize: '0.9rem' }}>{userEmail || 'N/A'}</p>
+              </div>
+
+              <div style={{ flex: 1 }}>
+                <div className="card-grid">
+                  <div className="card">
+                    <h3>Name</h3>
+                    <p>{userName}</p>
+                  </div>
+                  <div className="card">
+                    <h3>Email</h3>
+                    <p>{userEmail || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
       case 'browse':
         return (
           <div className="dashboard-content">
@@ -278,7 +510,17 @@ const ReceiverDashboard = () => {
                   </div>
                   <div className="donation-meta">
                     <span><strong>Quantity:</strong> {d.quantity}</span>
-                    <span><strong>Location:</strong> {d.location}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <strong>Location:</strong> {d.location}
+                      <button
+                        className="btn"
+                        type="button"
+                        onClick={() => openMapToDonor(d.location)}
+                        title="Show distance and route"
+                      >
+                        <FaMapMarkedAlt style={{ marginRight: 6 }} /> Map
+                      </button>
+                    </span>
                     <span><strong>Donor:</strong> {d.donor?.name || 'Anonymous'}</span>
                     <span><strong>Donor Email:</strong> {d.donor?.email || 'N/A'}</span>
                     <span><strong>Date:</strong> {new Date(d.createdAt).toLocaleString()}</span>
@@ -286,7 +528,14 @@ const ReceiverDashboard = () => {
                   <div className="donation-actions">
                     <button
                       className="btn accept"
-                      onClick={() => acceptDonation({ id: d._id, title: d.food })}
+                      onClick={() => acceptDonation({
+                        id: d._id,
+                        food: d.food,
+                        quantity: d.quantity,
+                        location: d.location,
+                        donor: d.donor,
+                        createdAt: d.createdAt,
+                      })}
                       disabled={hasAccepted(d._id)}
                     >
                       {hasAccepted(d._id) ? 'Accepted' : 'Accept'}
@@ -330,6 +579,20 @@ const ReceiverDashboard = () => {
                     value={prefs.location}
                     onChange={(e) => setPrefs({ ...prefs, location: e.target.value })}
                   />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                    <button type="button" className="btn" onClick={() => setShowLocationPrompt(true)}>Change location</button>
+                    {storedLocation && (
+                      <button type="button" className="btn" onClick={clearStoredLocation} title="Clear stored location from this device">Clear stored location</button>
+                    )}
+                    {!storedLocation && (
+                      <span style={{ fontSize: 12, color: '#6b7280' }}>No stored location yet.</span>
+                    )}
+                  </div>
+                  {storedLocation && (
+                    <div style={{ marginTop: 6, fontSize: 13, color: '#374151' }}>
+                      <strong>Stored:</strong> {storedLocation}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -370,7 +633,7 @@ const ReceiverDashboard = () => {
                   <label>Theme</label>
                   <select
                     value={prefs.theme}
-                    onChange={(e) => setPrefs({ ...prefs, theme: e.target.value })}
+                    onChange={(e) => { const val = e.target.value; setPrefs({ ...prefs, theme: val }); setTheme(val); }}
                   >
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
@@ -400,6 +663,38 @@ const ReceiverDashboard = () => {
             </form>
           </div>
         );
+      case 'connections':
+        return (
+          <div className="dashboard-content">
+            <h2>Connections</h2>
+            <div className="card-grid">
+              {acceptedDonations.map((a) => {
+                const m = a.meta || {};
+                const donor = m.donor || {};
+                return (
+                  <div key={a.id} className="card">
+                    <h4 style={{ marginTop: 0 }}>{donor.name || 'Donor'}</h4>
+                    <p style={{ marginTop: 4, color: '#6b7280' }}>Donor</p>
+                    {donor.email && <p>Email: {donor.email}</p>}
+                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e5e7eb' }}>
+                      <div><strong>Food:</strong> {m.food || m.foodName || m.item || 'N/A'}</div>
+                      {(m.quantity || m.qty) && <div><strong>Quantity:</strong> {m.quantity || m.qty}</div>}
+                      {(m.location || m.pickup) && <div><strong>Pickup:</strong> {m.location || m.pickup}</div>}
+                      {a.receivedAt ? (
+                        <div><strong>Received at:</strong> {new Date(a.receivedAt).toLocaleString()}</div>
+                      ) : (
+                        <div><strong>Accepted at:</strong> {new Date(a.at).toLocaleString()}</div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {acceptedDonations.length === 0 && (
+                <div className="card"><p>No connections yet. Accept a donation to see it here. Marking as received will keep the connection for your records.</p></div>
+              )}
+            </div>
+          </div>
+        );
       case 'map':
         return (
           <div className="dashboard-content">
@@ -425,6 +720,7 @@ const ReceiverDashboard = () => {
   };
 
   return (
+    <>
     <div className="dashboard-container">
       {/* Sidebar */}
       <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
@@ -504,41 +800,60 @@ const ReceiverDashboard = () => {
             <div className="profile-dropdown" style={{ position: 'relative' }}>
               <div 
                 className="user-avatar"
-                onClick={() => setShowProfile(!showProfile)}
                 style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
                   gap: '8px', 
-                  cursor: 'pointer', 
                   padding: '8px 12px', 
                   borderRadius: '4px' 
                 }}
               >
-                {profileImage ? (
-                  <img 
-                    src={profileImage} 
-                    alt="Profile" 
-                    style={{ 
+                <div
+                  onClick={() => { const el = document.getElementById('nav-profile-upload'); if (el) el.click(); }}
+                  title="Change profile picture"
+                  style={{ cursor: 'pointer' }}
+                >
+                  {profileImage ? (
+                    <img 
+                      src={profileImage} 
+                      alt="Profile" 
+                      style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '50%', 
+                        objectFit: 'cover' 
+                      }} 
+                    />
+                  ) : (
+                    <div style={{ 
                       width: '32px', 
                       height: '32px', 
                       borderRadius: '50%', 
-                      objectFit: 'cover' 
-                    }} 
-                  />
-                ) : (
-                  <div style={{ 
-                    width: '32px', 
-                    height: '32px', 
-                    borderRadius: '50%', 
-                    backgroundColor: '#e5e7eb', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center' 
-                  }}>
-                    <FaUser style={{ color: '#4b5563' }} />
-                  </div>
-                )}
-                <span className="username" style={{ fontWeight: 500 }}>{userName}</span>
+                      backgroundColor: '#e5e7eb', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}>
+                      <FaUser style={{ color: '#4b5563' }} />
+                    </div>
+                  )}
+                </div>
+                <input
+                  id="nav-profile-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                  style={{ display: 'none' }}
+                  disabled={isUploading}
+                />
+                <span 
+                  className="username" 
+                  style={{ fontWeight: 500, cursor: 'pointer' }}
+                  onClick={() => setShowProfile(!showProfile)}
+                >
+                  {userName}
+                </span>
               </div>
 
               {showProfile && (
@@ -549,7 +864,7 @@ const ReceiverDashboard = () => {
                     right: 0,
                     top: '100%',
                     marginTop: '8px',
-                    width: '240px',
+                    width: '200px',
                     background: '#fff',
                     borderRadius: '8px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
@@ -558,132 +873,21 @@ const ReceiverDashboard = () => {
                   }}
                 >
                   <div 
-                    className="profile-header"
-                    style={{
-                      padding: '16px',
-                      textAlign: 'center',
-                      borderBottom: '1px solid #f3f4f6'
-                    }}
+                    className="profile-dropdown-item" 
+                    onClick={() => { setActiveTab('profile'); setShowProfile(false); }}
+                    style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', transition: 'background-color 0.2s', color: '#1f2937', borderBottom: '1px solid #f3f4f6' }}
                   >
-                    <div style={{ position: 'relative', display: 'inline-block', marginBottom: '12px' }}>
-                      {profileImage ? (
-                        <img 
-                          src={profileImage} 
-                          alt="Profile" 
-                          style={{ 
-                            width: '80px', 
-                            height: '80px', 
-                            borderRadius: '50%', 
-                            objectFit: 'cover',
-                            border: '3px solid #fff',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                          }} 
-                        />
-                      ) : (
-                        <div style={{ 
-                          width: '80px', 
-                          height: '80px', 
-                          borderRadius: '50%', 
-                          backgroundColor: '#e5e7eb', 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center',
-                          margin: '0 auto',
-                          border: '3px solid #fff',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                        }}>
-                          <FaUser size={32} style={{ color: '#6b7280' }} />
-                        </div>
-                      )}
-                      <label 
-                        htmlFor="profile-upload"
-                        style={{
-                          position: 'absolute',
-                          bottom: '0',
-                          right: '0',
-                          backgroundColor: '#3b82f6',
-                          color: 'white',
-                          borderRadius: '50%',
-                          width: '28px',
-                          height: '28px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                        }}
-                      >
-                        {isUploading ? (
-                          <div className="spinner" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderRadius: '50%', borderTopColor: '#fff', animation: 'spin 1s ease-in-out infinite' }}></div>
-                        ) : (
-                          <FaUser size={12} />
-                        )}
-                        <input
-                          id="profile-upload"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleProfileImageChange}
-                          style={{ display: 'none' }}
-                          disabled={isUploading}
-                        />
-                      </label>
-                    </div>
-                    <h4 style={{ margin: '8px 0 4px', color: '#111827' }}>{userName}</h4>
-                    <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>{userEmail || 'No email'}</p>
-                    <div style={{ 
-                      display: 'inline-block',
-                      marginTop: '8px',
-                      padding: '4px 8px',
-                      backgroundColor: '#e0f2fe',
-                      color: '#0369a1',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 500
-                    }}>
-                      {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-                    </div>
+                    <FaUser size={16} style={{ color: '#6b7280' }} />
+                    <span>Profile</span>
                   </div>
-                  <div style={{ padding: '8px 0' }}>
-                    <div 
-                      className="profile-dropdown-item"
-                      onClick={() => {
-                        setActiveTab('profile');
-                        setShowProfile(false);
-                      }}
-                      style={{
-                        padding: '12px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s',
-                        color: '#1f2937',
-                        borderBottom: '1px solid #f3f4f6'
-                      }}
-                    >
-                      <FaUser size={16} style={{ color: '#6b7280' }} />
-                      <span>My Profile</span>
-                    </div>
-                    <div 
-                      className="profile-dropdown-item"
-                      onClick={() => {
-                        setActiveTab('settings');
-                        setShowProfile(false);
-                      }}
-                      style={{
-                        padding: '12px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s',
-                        color: '#1f2937',
-                        borderBottom: '1px solid #f3f4f6'
-                      }}
-                    >
-                      <FaCog size={16} style={{ color: '#6b7280' }} />
-                      <span>Settings</span>
-                    </div>
+                  <div 
+                    className="profile-dropdown-item"
+                    onClick={() => { setActiveTab('settings'); setShowProfile(false); }}
+                    style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', transition: 'background-color 0.2s', color: '#1f2937', borderBottom: '1px solid #f3f4f6' }}
+                  >
+                    <FaCog size={16} style={{ color: '#6b7280' }} />
+                    <span>Settings</span>
+                  </div>
                     <div 
                       className="profile-dropdown-item"
                       onClick={handleLogout}
@@ -701,7 +905,6 @@ const ReceiverDashboard = () => {
                       <span>Logout</span>
                     </div>
                   </div>
-                </div>
               )}
             </div>
           </div>
@@ -713,6 +916,48 @@ const ReceiverDashboard = () => {
         </div>
       </div>
     </div>
+    {showLocationPrompt && (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+        <div style={{ background: '#fff', width: '92%', maxWidth: 520, borderRadius: 12, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0 }}>Share your location</h3>
+            <button className="close-btn" onClick={() => setShowLocationPrompt(false)} aria-label="Close">&times;</button>
+          </div>
+          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ margin: 0, color: '#374151' }}>We use your location to show nearby donations. With your consent, we'll store it on this device and you can change or clear it anytime in Settings.</p>
+            <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 14 }}>
+              <input type="checkbox" checked={consentChecked} onChange={(e) => setConsentChecked(e.target.checked)} />
+              <span>I consent to storing my location on this device for improved matching.</span>
+            </label>
+            <div>
+              <label style={{ display: 'block', fontSize: 14, marginBottom: 6 }}>Enter location manually (address, area or lat,lng)</label>
+              <input
+                type="text"
+                value={manualLocation}
+                onChange={(e) => setManualLocation(e.target.value)}
+                placeholder="e.g., Andheri West, Mumbai or 19.07,72.88"
+                style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 8 }}
+              />
+            </div>
+          </div>
+          <div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <button className="btn" onClick={() => setShowLocationPrompt(false)}>Not now</button>
+            <button className="btn" onClick={useCurrentLocation} disabled={!consentChecked}>Use my current location</button>
+            <button className="btn primary" onClick={() => { if (!consentChecked) return; if (manualLocation.trim()) saveStoredLocation(manualLocation.trim()); }} disabled={!consentChecked || !manualLocation.trim()}>Save manual</button>
+          </div>
+        </div>
+      </div>
+    )}
+    {mapOpen && (
+      <MapDistanceModal
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        origin={mapOrigin}
+        destination={mapDestination}
+        title="Receiver to Donor Directions"
+      />
+    )}
+    </>
   );
 };
 
