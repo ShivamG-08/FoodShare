@@ -48,7 +48,7 @@ app.get("/health", (req, res) => {
 
 // Connect to MongoDB
 const MONGODB_URI = process.env.MONGODB_URI || 
-  "mongodb+srv://shuklaayaan27_db_user:mBY7qlD6r7oEOsxm@cluster0.3r9u0e9.mongodb.net/FoodShareDB?retryWrites=true&w=majority&appName=Cluster0";
+  "mongodb+srv://moretaniya27_db_user:b93iZ9cexTIto1MB@cluster0.t1zzrdi.mongodb.net/?appName=Cluster0";
 
 mongoose
   .connect(MONGODB_URI)

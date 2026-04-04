@@ -101,19 +101,11 @@ FoodShare/
 3. In the frontend directory: `npm start`
 4. The application should be running at `http://localhost:3000`
 
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Contact
 
-Your Name - your.email@example.com
-Project Link: [https://github.com/yourusername/FoodShare](https://github.com/yourusername/FoodShare)
+Shivam Gupta - shivamgupta720896@gmail.com
+Project Link: https://github.com/ShivamG-08/FoodShare
+
+
+mongodb pass :- b93iZ9cexTIto1MB
+mongodb+srv://moretaniya27_db_user:b93iZ9cexTIto1MB@cluster0.t1zzrdi.mongodb.net/?appName=Cluster0
