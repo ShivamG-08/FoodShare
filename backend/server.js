@@ -47,8 +47,11 @@ app.get("/health", (req, res) => {
 });
 
 // Connect to MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || 
-  "mongodb+srv://moretaniya27_db_user:b93iZ9cexTIto1MB@cluster0.t1zzrdi.mongodb.net/?appName=Cluster0";
+if (!process.env.MONGODB_URI) {
+  console.error("❌ MONGODB_URI not set in .env file. Add your Atlas connection string to FoodShare/backend/.env and restart.");
+  process.exit(1);
+}
+const MONGODB_URI = process.env.MONGODB_URI;
 
 mongoose
   .connect(MONGODB_URI)
