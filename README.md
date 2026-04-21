@@ -105,7 +105,3 @@ FoodShare/
 
 Shivam Gupta - shivamgupta720896@gmail.com
 Project Link: https://github.com/ShivamG-08/FoodShare
-
-
-mongodb pass :- b93iZ9cexTIto1MB
-mongodb+srv://moretaniya27_db_user:b93iZ9cexTIto1MB@cluster0.t1zzrdi.mongodb.net/?appName=Cluster0
