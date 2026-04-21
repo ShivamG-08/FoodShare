@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./AdminLogin.css";
 
 export default function AdminLogin() {
@@ -7,23 +8,42 @@ export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Demo credentials (you can change these):
-  const DEMO_EMAIL = "tripayush746@gmail.com";
-  const DEMO_PASSWORD = "admin4321";
+  // Hardcoded admin credentials
+  const ADMIN_EMAIL = "tripathiayush746@gmail.com";
+  const ADMIN_PASSWORD = "Dhanapur@2024";
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
+    console.log("Admin login form submitted");
+    console.log("Email:", email);
+    console.log("Password:", password);
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const normalizedPassword = password.trim();
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        { email, password },
+        { headers: { "Content-Type": "application/json" } }
+      );
 
-    if (normalizedEmail === DEMO_EMAIL.toLowerCase() && normalizedPassword === DEMO_PASSWORD) {
-      localStorage.setItem("isAdmin", "true");
-      navigate("/admin", { replace: true });
-    } else {
-      setError("Invalid admin credentials.");
+      if (response.data && response.data.role === "admin") {
+        // Store admin user data
+        localStorage.setItem("userRole", "admin");
+        localStorage.setItem("userId", response.data.user.id);
+        localStorage.setItem("userEmail", response.data.user.email);
+        localStorage.setItem("userName", response.data.user.name || "");
+        
+        navigate("/admin", { replace: true });
+      } else {
+        setError("Access denied. Admin role required.");
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Invalid admin credentials.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -39,7 +59,7 @@ export default function AdminLogin() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="tripayush746@gmail.com"
+              placeholder="tripathiayush746@gmail.com"
               required
             />
           </label>
@@ -53,8 +73,10 @@ export default function AdminLogin() {
               required
             />
           </label>
-          <button type="submit" className="btn primary">Sign In</button>
-          <p className="hint">Demo: tripayush746@gmail.com / admin4321</p>
+          <button type="submit" className="btn primary" disabled={isLoading}>
+            {isLoading ? "Signing In..." : "Sign In"}
+          </button>
+          <p className="hint">Admin Credentials: tripathiayush746@gmail.com / Dhanapur@2024</p>
         </form>
       </div>
     </div>

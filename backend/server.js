@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
+const http = require("http");
 require("dotenv").config();
 
 // Import routes
@@ -11,6 +12,11 @@ const donationRoutes = require("./routes/donations");
 const notificationRoutes = require("./routes/notifications");
 const predictionRoutes = require("./routes/prediction");
 const usersRoutes = require("./routes/users");
+const taskRoutes = require("./routes/tasks");
+
+// Import services
+const { initializeSocket } = require("./services/socketService");
+const { testEmailConfig } = require("./utils/sendEmail");
 
 // Initialize express app
 const app = express();
@@ -28,11 +34,12 @@ try {
 app.use("/uploads", express.static(uploadsDir));
 
 // Routes
-app.use("/auth", authRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/donations", donationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/prediction", predictionRoutes);
 app.use("/api/users", usersRoutes);
+app.use("/api/tasks", taskRoutes);
 
 // Debug: Log registered routes
 donationRoutes.stack.forEach((r) => {
@@ -55,13 +62,54 @@ const MONGODB_URI = process.env.MONGODB_URI;
 
 mongoose
   .connect(MONGODB_URI)
-  .then(() => console.log("✅ Connected to MongoDB Atlas"))
+  .then(async () => {
+    console.log("✅ Connected to MongoDB Atlas");
+    
+    // Create hardcoded admin account
+    const User = require("./models/User");
+    const bcrypt = require("bcryptjs");
+    
+    try {
+      const existingAdmin = await User.findOne({ email: "tripathiayush746@gmail.com" });
+      
+      if (!existingAdmin) {
+        const hashedPassword = await bcrypt.hash("Dhanapur@2024", 12);
+        const adminUser = new User({
+          name: "System Administrator",
+          email: "tripathiayush746@gmail.com",
+          password: hashedPassword,
+          role: "admin",
+          status: "approved",
+          customId: "FSA1"
+        });
+        
+        await adminUser.save();
+        console.log(" Admin account created successfully!");
+      } else {
+        console.log(" Admin account already exists");
+      }
+    } catch (error) {
+      console.error(" Error creating admin account:", error);
+    }
+  })
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// Start server
+// Start server with Socket.IO
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+const server = http.createServer(app);
+const io = initializeSocket(server);
+
+server.listen(PORT, async () => {
+  console.log(` Server running on http://localhost:${PORT}`);
+  console.log(` Socket.IO enabled for real-time communication`);
+  
+  // Test email configuration
+  const emailReady = await testEmailConfig();
+  if (emailReady) {
+    console.log(` Email service ready`);
+  } else {
+    console.log(` Email service not configured - notifications will be logged only`);
+  }
 });
 
 // Error handling for unhandled promise rejections

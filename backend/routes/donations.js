@@ -12,12 +12,58 @@ router.get('/test', (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const { userId, food, quantity, location, notes } = req.body;
+    const { userId, food, quantity, location, notes, latitude, longitude } = req.body;
     if (!userId || !food || !quantity || !location) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const donation = await Donation.create({ userId, food, quantity, location, notes });
+    const donation = await Donation.create({ 
+      userId, 
+      food, 
+      quantity, 
+      location, 
+      notes,
+      latitude: latitude || null,
+      longitude: longitude || null
+    });
+    
+    // Send email notifications to receivers and volunteers
+    try {
+      // Get donor details
+      const donor = await User.findById(userId).select('name email');
+      
+      // Get all receivers and volunteers to notify
+      const usersToNotify = await User.find({
+        role: { $in: ['receiver', 'volunteer'] },
+        status: 'approved'
+      }).select('email');
+      
+      if (usersToNotify.length > 0 && donor) {
+        const { sendEmail } = require("../utils/sendEmail");
+        const recipientEmails = usersToNotify.map(user => user.email);
+        
+        const emailData = {
+          foodType: food,
+          quantity: quantity,
+          location: location,
+          donorName: donor.name,
+          donorEmail: donor.email,
+          timestamp: new Date().toLocaleString(),
+          loginUrl: 'http://localhost:3000/login'
+        };
+        
+        // Send email to all recipients (non-blocking)
+        sendEmail(recipientEmails, 'newDonation', emailData).catch(emailError => {
+          console.error('Failed to send donation notification emails:', emailError);
+        });
+        
+        console.log(`📧 Donation notification sent to ${recipientEmails.length} users`);
+      }
+    } catch (emailError) {
+      console.error('Error sending donation notifications:', emailError);
+      // Continue with response even if email fails
+    }
+    
     return res.status(201).json(donation);
   } catch (err) {
     console.error("Create donation error:", err);
@@ -66,6 +112,8 @@ router.get("/available", async (_req, res) => {
         food: d.food,
         quantity: d.quantity,
         location: d.location,
+        latitude: d.latitude,
+        longitude: d.longitude,
         status: d.status,
         createdAt: d.createdAt,
         donor: d.userId ? { name: d.userId.name, email: d.userId.email, id: d.userId._id } : null,
@@ -157,6 +205,184 @@ router.patch("/:id/received", async (req, res) => {
   } catch (err) {
     console.error("Mark received error:", err);
     return res.status(500).json({ message: "Error marking donation as received" });
+  }
+});
+
+// Volunteer accepts a donation task
+router.post("/:id/accept", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { volunteerId } = req.body;
+    console.log("Accept donation request:", { id, volunteerId });
+    
+    if (!volunteerId) {
+      console.log("Missing volunteerId");
+      return res.status(400).json({ message: "volunteerId is required" });
+    }
+
+    // Verify user is a volunteer
+    const volunteer = await User.findById(volunteerId);
+    console.log("Volunteer found:", volunteer);
+    
+    if (!volunteer || volunteer.role !== "volunteer") {
+      console.log("User is not a volunteer or not found");
+      return res.status(403).json({ message: "Only volunteers can accept donation tasks" });
+    }
+
+    // Check if donation exists and is pending
+    const donation = await Donation.findById(id);
+    console.log("Donation found:", donation);
+    
+    if (!donation) {
+      console.log("Donation not found");
+      return res.status(404).json({ message: "Donation not found" });
+    }
+    
+    if (donation.status !== "pending") {
+      console.log("Donation not pending, current status:", donation.status);
+      return res.status(409).json({ message: "Donation not available or already assigned" });
+    }
+
+    const updated = await Donation.findOneAndUpdate(
+      { _id: id, status: "pending" },
+      { $set: { status: "assigned", assignedTo: volunteerId } },
+      { new: true }
+    ).populate("userId", "name email");
+
+    console.log("Updated donation:", updated);
+
+    if (!updated) {
+      console.log("Failed to update donation");
+      return res.status(409).json({ message: "Donation not available or already assigned" });
+    }
+
+    // Create notification for donor
+    try {
+      await Notification.create({
+        toUserId: updated.userId,
+        type: "donation_assigned",
+        title: "Donation assigned to volunteer",
+        message: `Your donation '${updated.food}' has been assigned to volunteer ${volunteer.name}.`,
+        meta: {
+          donationId: updated._id,
+          volunteerId,
+          volunteer: { id: volunteer._id, name: volunteer.name, email: volunteer.email }
+        },
+      });
+    } catch (e) {
+      console.error("Create notification (volunteer accept) error:", e);
+    }
+
+    return res.json(updated);
+  } catch (err) {
+    console.error("Volunteer accept donation error:", err);
+    return res.status(500).json({ message: "Error accepting donation task" });
+  }
+});
+
+// Volunteer updates delivery status
+router.put("/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { volunteerId, status } = req.body;
+    
+    if (!volunteerId) return res.status(400).json({ message: "volunteerId is required" });
+    if (!status || !["picked_up", "in_transit", "delivered"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status. Must be: picked_up, in_transit, or delivered" });
+    }
+
+    // Verify user is a volunteer
+    const volunteer = await User.findById(volunteerId);
+    if (!volunteer || volunteer.role !== "volunteer") {
+      return res.status(403).json({ message: "Only volunteers can update delivery status" });
+    }
+
+    // Map frontend status to backend status
+    const statusMap = {
+      "picked_up": "picked_up",
+      "in_transit": "picked_up", // Keep as picked_up in backend, but track in_transit in notification
+      "delivered": "completed"
+    };
+
+    const backendStatus = statusMap[status];
+
+    const updated = await Donation.findOneAndUpdate(
+      { _id: id, assignedTo: volunteerId },
+      { $set: { status: backendStatus } },
+      { new: true }
+    ).populate("userId", "name email");
+
+    if (!updated) {
+      return res.status(409).json({ message: "Donation not found or not assigned to this volunteer" });
+    }
+
+    // Create notification for donor
+    try {
+      let message = "";
+      if (status === "picked_up") {
+        message = `Volunteer ${volunteer.name} has picked up your donation '${updated.food}'.`;
+      } else if (status === "in_transit") {
+        message = `Volunteer ${volunteer.name} is in transit with your donation '${updated.food}'.`;
+      } else if (status === "delivered") {
+        message = `Volunteer ${volunteer.name} has delivered your donation '${updated.food}'. Thank you!`;
+      }
+
+      await Notification.create({
+        toUserId: updated.userId,
+        type: "delivery_update",
+        title: `Delivery ${status.replace("_", " ")}`,
+        message,
+        meta: {
+          donationId: updated._id,
+          volunteerId,
+          volunteer: { id: volunteer._id, name: volunteer.name, email: volunteer.email },
+          status
+        },
+      });
+    } catch (e) {
+      console.error("Create notification (status update) error:", e);
+    }
+
+    return res.json(updated);
+  } catch (err) {
+    console.error("Update delivery status error:", err);
+    return res.status(500).json({ message: "Error updating delivery status" });
+  }
+});
+
+// Get donations assigned to a specific volunteer
+router.get("/volunteer/:volunteerId", async (req, res) => {
+  try {
+    const { volunteerId } = req.params;
+    
+    // Verify user is a volunteer
+    const volunteer = await User.findById(volunteerId);
+    if (!volunteer || volunteer.role !== "volunteer") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const donations = await Donation.find({ assignedTo: volunteerId })
+      .sort({ createdAt: -1 })
+      .populate("userId", "name email");
+    
+    return res.json(
+      donations.map((d) => ({
+        _id: d._id,
+        food: d.food,
+        quantity: d.quantity,
+        location: d.location,
+        latitude: d.latitude,
+        longitude: d.longitude,
+        status: d.status,
+        createdAt: d.createdAt,
+        notes: d.notes,
+        assignedTo: d.assignedTo,
+        donor: d.userId ? { name: d.userId.name, email: d.userId.email, id: d.userId._id } : null,
+      }))
+    );
+  } catch (err) {
+    console.error("Get volunteer donations error:", err);
+    return res.status(500).json({ message: "Error fetching volunteer donations" });
   }
 });
 

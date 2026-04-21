@@ -16,7 +16,7 @@ import './ReceiverDashboard.css';
 import { getAvailableDonations, acceptDonation as acceptDonationApi, markReceived as markReceivedApi } from '../services/donationApi';
 import MapSection from '../components/MapSection';
 import MapDistanceModal from '../components/MapDistanceModal';
-import { getUser, uploadAvatar } from '../services/usersApi';
+import { getUser, uploadAvatar, uploadProfilePicture } from '../services/usersApi';
 
 const ReceiverDashboard = () => {
   const userName = (typeof window !== 'undefined' && localStorage.getItem('userName')) || (typeof window !== 'undefined' && localStorage.getItem('userEmail')) || 'Receiver';
@@ -70,16 +70,19 @@ const ReceiverDashboard = () => {
     const uid = (typeof window !== 'undefined' && localStorage.getItem('userId')) || '';
     const role = (typeof window !== 'undefined' && localStorage.getItem('userRole')) || 'receiver';
     const key = uid ? `profileImage:${role}:${uid}` : 'profileImage:guest';
-    if (!file || !uid) return;
+    if (!file) return;
     try {
       setIsUploading(true);
-      const res = await uploadAvatar(uid, file);
+      const res = await uploadProfilePicture(file);
       const url = res?.profileImageUrl || '';
       if (url) {
         setProfileImage(url);
         try { localStorage.setItem(key, url); } catch (_) {}
+        alert('Profile picture uploaded successfully!');
       }
-    } catch (_) {
+    } catch (error) {
+      console.error('Profile picture upload error:', error);
+      alert('Failed to upload profile picture. Please try again.');
     } finally {
       setIsUploading(false);
     }
