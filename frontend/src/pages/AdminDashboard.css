@@ -48,6 +48,13 @@
 .actions{margin-top:12px}
 .btn.primary{background:var(--primary);color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
 
+/* Document links styling */
+.documents-list{display:flex;flex-direction:column;gap:6px}
+.document-link{display:flex;align-items:center;gap:6px;color:var(--primary);text-decoration:none;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#f8fafc;transition:all 0.2s ease;font-size:0.85rem}
+.document-link:hover{background:#eff6ff;border-color:var(--primary);transform:translateY(1px)}
+.document-icon{font-size:0.9rem;color:var(--primary)}
+.no-documents{color:var(--muted);font-style:italic;font-size:0.85rem}
+
 @media (max-width: 992px){.admin-sidebar{position:fixed;left:0;top:0;height:auto;width:100%;z-index:1000}.admin-main{margin-top:70px}}
 
 /* Modal */

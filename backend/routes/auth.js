@@ -3,17 +3,47 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const crypto = require("crypto");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 const router = express.Router();
 
+// Multer configuration for profile picture upload during signup
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dir = path.join(__dirname, "..", "uploads", "avatars");
+    try { fs.mkdirSync(dir, { recursive: true }); } catch (_) {}
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname) || ".png";
+    const safe = `signup-${Date.now()}${ext}`;
+    cb(null, safe);
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
+    }
+  }
+});
+
 // Signup Route
-router.post("/signup", async (req, res) => {
+router.post("/signup", upload.single("profilePic"), async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
     // Validate role
-    if (!['donor', 'receiver'].includes(role)) {
-      return res.status(400).json({ message: "Invalid role. Must be either 'donor' or 'receiver'" });
+    if (!['donor', 'receiver', 'volunteer', 'admin'].includes(role)) {
+      return res.status(400).json({ message: "Invalid role. Must be either 'donor', 'receiver', 'volunteer', or 'admin'" });
     }
 
     // Check if user exists
@@ -23,12 +53,25 @@ router.post("/signup", async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Handle profile picture
+    let profilePic = "";
+    let profileImageUrl = "";
+    
+    if (req.file) {
+      profilePic = req.file.filename;
+      const rel = path.posix.join("uploads", "avatars", req.file.filename);
+      profileImageUrl = `${req.protocol}://${req.get("host")}/${rel}`;
+    }
+
     // Create and save new user with role
     const newUser = new User({
       name,
       email,
       password: hashedPassword,
-      role: role || 'donor' // Default to 'donor' if role is not provided
+      role: role || 'donor', // Default to 'donor' if role is not provided
+      status: role === 'admin' ? 'approved' : 'pending', // Auto-approve admin users
+      profilePic,
+      profileImageUrl
     });
     
     const savedUser = await newUser.save();
@@ -40,9 +83,11 @@ router.post("/signup", async (req, res) => {
       message: "User registered successfully", 
       user: {
         id: savedUser._id,
+        customId: savedUser.customId,
         name: savedUser.name,
         email: savedUser.email,
         role: savedUser.role,
+        profilePic: savedUser.profilePic || "",
         profileImageUrl: savedUser.profileImageUrl || ""
       }
     });
@@ -67,9 +112,26 @@ router.post("/login", async (req, res) => {
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
   
+      // Check if user is approved (except admins)
+      if (user.role !== 'admin' && user.status !== 'approved') {
+        if (user.status === 'rejected') {
+          return res.status(403).json({ message: "Account has been rejected" });
+        } else {
+          return res.status(403).json({ message: "Account not approved yet" });
+        }
+      }
+  
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: user._id, email: user.email, role: user.role },
+        process.env.JWT_SECRET || 'your_jwt_secret_key_here',
+        { expiresIn: '24h' }
+      );
+
       res.status(200).json({
         message: "Login successful",
         role: user.role,
+        token,
         user: {
           id: user._id,
           name: user.name,
