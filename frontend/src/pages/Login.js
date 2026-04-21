@@ -26,7 +26,7 @@ function Login() {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/auth/login",
+        "http://localhost:5000/api/auth/login",
         formData,
         { headers: { "Content-Type": "application/json" } }
       );
@@ -40,6 +40,12 @@ function Login() {
 
         // Store after role check passes
         localStorage.setItem("userRole", response.data.role);
+        
+        // Store JWT token for authentication
+        if (response.data.token) {
+          localStorage.setItem("token", response.data.token);
+        }
+        
         if (response.data.user) {
           localStorage.setItem("userId", response.data.user.id);
           localStorage.setItem("userEmail", response.data.user.email);
@@ -54,10 +60,26 @@ function Login() {
           } catch (_) {}
         }
 
-        if (response.data.role === "donor") {
-          navigate("/donor-dashboard");
+        // Check if user is approved (except admin)
+        if (response.data.role !== "admin") {
+          // User can access dashboard if approved
+          // The backend already validates approval status, so if we reach here, user is approved
+          switch (response.data.role) {
+            case "donor":
+              navigate("/donor");
+              break;
+            case "receiver":
+              navigate("/receiver");
+              break;
+            case "volunteer":
+              navigate("/volunteer");
+              break;
+            default:
+              navigate("/waiting-approval");
+          }
         } else {
-          navigate("/receiver-dashboard");
+          // Admin can access dashboard directly
+          navigate("/admin");
         }
       }
     } catch (err) {
@@ -73,7 +95,7 @@ function Login() {
     setForgotStatus("");
     try {
       const res = await axios.post(
-        "http://localhost:5000/auth/forgot-password",
+        "http://localhost:5000/api/auth/forgot-password",
         { email: forgotEmail },
         { headers: { "Content-Type": "application/json" } }
       );
@@ -93,6 +115,10 @@ function Login() {
           ? "Receiver Login"
           : requiredRole === "donor"
           ? "Donor Login"
+          : requiredRole === "volunteer"
+          ? "Volunteer Login"
+          : requiredRole === "admin"
+          ? "Admin Login"
           : "Login"}
       </h2>
 

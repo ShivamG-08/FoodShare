@@ -6,6 +6,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
 import DonorDashboard from "./pages/DonorDashboard";
 import ReceiverDashboard from "./pages/ReceiverDashboard";
+import VolunteerDashboard from "./pages/VolunteerDashboard";
+import WaitingForApproval from "./pages/WaitingForApproval";
 import ResetPassword from "./pages/ResetPassword";
 import StoryDetails from './pages/StoryDetails';
 import "./App.css";
@@ -348,8 +350,11 @@ function Navbar() {
     location.pathname === "/reset-password" ||
     location.pathname === "/admin-login" ||
     location.pathname === "/admin" ||
+    location.pathname === "/donor" ||
+    location.pathname === "/receiver" ||
     location.pathname === "/donor-dashboard" ||
-    location.pathname === "/receiver-dashboard";
+    location.pathname === "/receiver-dashboard" ||
+    location.pathname === "/volunteer";
 
   if (hideNavbar) return null;
 
@@ -406,18 +411,49 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/waiting-approval" element={<WaitingForApproval />} />
         <Route
           path="/admin"
           element={
-            typeof window !== "undefined" && localStorage.getItem("isAdmin") === "true" ? (
+            typeof window !== "undefined" && localStorage.getItem("userRole") === "admin" ? (
               <AdminDashboard />
             ) : (
               <Navigate to="/admin-login" replace />
             )
           }
         />
+        <Route
+          path="/donor"
+          element={
+            typeof window !== "undefined" && localStorage.getItem("userRole") === "donor" ? (
+              <DonorDashboard />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/receiver"
+          element={
+            typeof window !== "undefined" && localStorage.getItem("userRole") === "receiver" ? (
+              <ReceiverDashboard />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
         <Route path="/donor-dashboard" element={<DonorDashboard />} />
         <Route path="/receiver-dashboard" element={<ReceiverDashboard />} />
+        <Route
+          path="/volunteer"
+          element={
+            typeof window !== "undefined" && localStorage.getItem("userRole") === "volunteer" ? (
+              <VolunteerDashboard />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
         <Route path="*" element={<Navigate to="/" />} />
         <Route path="/stories/:storyId" element={<StoryDetails />} />
       </Routes>

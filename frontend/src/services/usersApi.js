@@ -16,4 +16,20 @@ export async function uploadAvatar(userId, file) {
   return data;
 }
 
-export default { getUser, uploadAvatar };
+export async function uploadProfilePicture(file) {
+  const fd = new FormData();
+  fd.append('profilePic', file);
+  
+  // Get auth token from localStorage
+  const token = localStorage.getItem('token');
+  
+  const { data } = await axios.put(`${BASE_URL}/api/users/upload-profile`, fd, {
+    headers: { 
+      'Content-Type': 'multipart/form-data',
+      'Authorization': `Bearer ${token}`
+    },
+  });
+  return data;
+}
+
+export default { getUser, uploadAvatar, uploadProfilePicture };
