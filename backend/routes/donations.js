@@ -2,6 +2,7 @@ const express = require("express");
 const Donation = require("../models/Donation");
 const Notification = require("../models/Notification");
 const User = require("../models/User");
+const Task = require("../models/Task");
 
 const router = express.Router();
 
@@ -100,12 +101,13 @@ router.get("/all", async (req, res) => {
   }
 });
 
-// Get available donations for receivers (pending status)
-router.get("/available", async (_req, res) => {
+// Get available donations (pending, not assigned to any receiver)
+router.get("/available", async (req, res) => {
   try {
-    const donations = await Donation.find({ status: "pending" })
+    const donations = await Donation.find({ status: "pending", assignedTo: { $eq: null } })
       .sort({ createdAt: -1 })
-      .populate({ path: "userId", select: "name email" });
+      .populate("userId", "name email");
+
     return res.json(
       donations.map((d) => ({
         _id: d._id,
@@ -114,13 +116,15 @@ router.get("/available", async (_req, res) => {
         location: d.location,
         latitude: d.latitude,
         longitude: d.longitude,
+        notes: d.notes,
         status: d.status,
+        assignedTo: d.assignedTo,
         createdAt: d.createdAt,
         donor: d.userId ? { name: d.userId.name, email: d.userId.email, id: d.userId._id } : null,
       }))
     );
   } catch (err) {
-    console.error("Available donations error:", err);
+    console.error("Get available donations error:", err);
     return res.status(500).json({ message: "Error fetching available donations" });
   }
 });
@@ -133,7 +137,7 @@ router.patch("/:id/accept", async (req, res) => {
     if (!receiverId) return res.status(400).json({ message: "receiverId is required" });
 
     const updated = await Donation.findOneAndUpdate(
-      { _id: id, status: "pending" },
+      { _id: id, status: "pending", assignedTo: { $eq: null } },
       { $set: { status: "assigned", assignedTo: receiverId } },
       { new: true }
     );
@@ -162,6 +166,36 @@ router.patch("/:id/accept", async (req, res) => {
       console.error("Create notification (accept) error:", e);
     }
 
+    // Auto-create a delivery task for volunteers
+    try {
+      const existingTask = await Task.findOne({ donation: updated._id });
+      if (!existingTask) {
+        const receiver = await User.findById(receiverId).select("name email address latitude longitude");
+        const task = new Task({
+          donor: updated.userId,
+          receiver: receiverId,
+          donation: updated._id,
+          pickupAddress: updated.location,
+          deliveryAddress: receiverLocation || receiver?.address || 'Address not provided',
+          pickupCoordinates: {
+            latitude: updated.latitude || null,
+            longitude: updated.longitude || null,
+          },
+          deliveryCoordinates: {
+            latitude: receiver?.latitude || null,
+            longitude: receiver?.longitude || null,
+          },
+          priority: 'medium',
+          status: 'pending',
+        });
+        await task.save();
+        console.log(`Auto-created task ${task._id} for donation ${updated._id}`);
+      }
+    } catch (e) {
+      console.error("Auto-create task error:", e);
+      // do not fail the main request
+    }
+
     return res.json(updated);
   } catch (err) {
     console.error("Accept donation error:", err);
@@ -184,6 +218,16 @@ router.patch("/:id/received", async (req, res) => {
 
     if (!updated) {
       return res.status(409).json({ message: "Donation not in a receivable state" });
+    }
+
+    // Also mark the associated task as delivered
+    try {
+      await Task.findOneAndUpdate(
+        { donation: updated._id },
+        { $set: { status: "delivered", deliveredAt: new Date(), actualDeliveryTime: new Date() } }
+      );
+    } catch (e) {
+      console.error("Update task on received error:", e);
     }
 
     // Create notification for donor (userId is donor) with receiver details
@@ -383,6 +427,44 @@ router.get("/volunteer/:volunteerId", async (req, res) => {
   } catch (err) {
     console.error("Get volunteer donations error:", err);
     return res.status(500).json({ message: "Error fetching volunteer donations" });
+  }
+});
+
+// Get donations assigned to a specific receiver (with task status)
+router.get("/receiver/:receiverId", async (req, res) => {
+  try {
+    const { receiverId } = req.params;
+
+    const donations = await Donation.find({ assignedTo: receiverId })
+      .sort({ createdAt: -1 })
+      .populate("userId", "name email");
+
+    // Enrich with task status
+    const enriched = await Promise.all(
+      donations.map(async (d) => {
+        const task = await Task.findOne({ donation: d._id }).select("status volunteer").populate("volunteer", "name email");
+        return {
+          _id: d._id,
+          food: d.food,
+          quantity: d.quantity,
+          location: d.location,
+          latitude: d.latitude,
+          longitude: d.longitude,
+          status: d.status,
+          createdAt: d.createdAt,
+          notes: d.notes,
+          assignedTo: d.assignedTo,
+          donor: d.userId ? { name: d.userId.name, email: d.userId.email, id: d.userId._id } : null,
+          taskStatus: task ? task.status : null,
+          volunteer: task?.volunteer ? { name: task.volunteer.name, email: task.volunteer.email, id: task.volunteer._id } : null,
+        };
+      })
+    );
+
+    return res.json(enriched);
+  } catch (err) {
+    console.error("Get receiver donations error:", err);
+    return res.status(500).json({ message: "Error fetching receiver donations" });
   }
 });
 

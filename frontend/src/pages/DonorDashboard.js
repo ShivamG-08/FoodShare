@@ -303,6 +303,7 @@ const DonorDashboard = () => {
       
       try {
         const data = await getDonationsByUser(userId);
+        console.log('Donor: loaded donation history from MongoDB:', data);
         setDonations(Array.isArray(data) ? data : []);
       } catch (e) {
         setHistoryError("Failed to load donation history.");

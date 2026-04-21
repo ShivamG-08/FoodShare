@@ -44,11 +44,17 @@ export async function getAllDonations() {
   return data;
 }
 
+export async function getReceiverDonations(receiverId) {
+  const { data } = await axios.get(`${BASE_URL}/api/donations/receiver/${receiverId}`);
+  return data;
+}
+
 export default { 
   createDonation, 
   getDonationsByUser, 
   getAvailableDonations, 
   acceptDonation, 
   markReceived, 
-  getAllDonations 
+  getAllDonations,
+  getReceiverDonations
 };

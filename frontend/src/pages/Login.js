@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "./Login.css";
 
 function Login() {
@@ -10,8 +10,7 @@ function Login() {
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotStatus, setForgotStatus] = useState("");
-  const navigate = useNavigate();
-  const location = useLocation();
+    const location = useLocation();
   const params = new URLSearchParams(location.search);
   const requiredRole = params.get("role"); // 'receiver' | 'donor' | null
 
@@ -60,27 +59,23 @@ function Login() {
           } catch (_) {}
         }
 
-        // Check if user is approved (except admin)
-        if (response.data.role !== "admin") {
-          // User can access dashboard if approved
-          // The backend already validates approval status, so if we reach here, user is approved
-          switch (response.data.role) {
-            case "donor":
-              navigate("/donor");
-              break;
-            case "receiver":
-              navigate("/receiver");
-              break;
-            case "volunteer":
-              navigate("/volunteer");
-              break;
-            default:
-              navigate("/waiting-approval");
-          }
-        } else {
-          // Admin can access dashboard directly
-          navigate("/admin");
+        // Determine target dashboard
+        let targetPath = "/waiting-approval";
+        if (response.data.role === "admin") {
+          targetPath = "/admin";
+        } else if (response.data.role === "donor") {
+          targetPath = "/donor";
+        } else if (response.data.role === "receiver") {
+          targetPath = "/receiver";
+        } else if (response.data.role === "volunteer") {
+          targetPath = "/volunteer";
         }
+
+        // Use window.location for guaranteed full navigation after auth state is stored
+        // This avoids any React Router race conditions with route guards
+        setTimeout(() => {
+          window.location.assign(targetPath);
+        }, 50);
       }
     } catch (err) {
       setError(err.response?.data?.message || "Invalid email or password. Please try again.");

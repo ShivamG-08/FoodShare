@@ -152,6 +152,7 @@ router.get('/available', async (req, res) => {
       .sort({ priority: -1, createdAt: 1 })
       .limit(parseInt(limit));
 
+    console.log('Available tasks for volunteers:', tasks);
     res.json(tasks);
   } catch (error) {
     console.error('Get available tasks error:', error);
@@ -265,6 +266,17 @@ router.put('/:taskId/status', async (req, res) => {
     }
 
     await task.save();
+
+    // Sync donation status with task status
+    try {
+      if (status === 'picked_up') {
+        await Donation.findByIdAndUpdate(task.donation, { status: 'picked_up' });
+      } else if (status === 'delivered') {
+        await Donation.findByIdAndUpdate(task.donation, { status: 'completed' });
+      }
+    } catch (e) {
+      console.error('Sync donation status error:', e);
+    }
 
     // Update volunteer performance when task is completed
     if (status === 'delivered' && previousStatus !== 'delivered') {

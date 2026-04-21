@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaUser,
@@ -26,7 +26,7 @@ import { getCurrentLocation } from "../utils/geolocation";
 import "../components/VolunteerMap.css";
 
 const VolunteerDashboard = () => {
-  const [activeTab, setActiveTab] = useState("availableDonations");
+  const [activeTab, setActiveTab] = useState("availableTasks");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
   
@@ -48,9 +48,6 @@ const VolunteerDashboard = () => {
   });
   const [isUploading, setIsUploading] = useState(false);
 
-  // State for donations
-  const [availableDonations, setAvailableDonations] = useState([]);
-  const [assignedDonations, setAssignedDonations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
@@ -105,116 +102,13 @@ const VolunteerDashboard = () => {
     setUserLocation(location);
   };
 
-  // Fetch available donations
-  const fetchAvailableDonations = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/donations/available`);
-      if (!response.ok) throw new Error("Failed to fetch available donations");
-      const data = await response.json();
-      setAvailableDonations(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch assigned donations for this volunteer
-  const fetchAssignedDonations = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/donations/volunteer/${uid}`);
-      if (!response.ok) throw new Error("Failed to fetch assigned donations");
-      const data = await response.json();
-      setAssignedDonations(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Accept a donation task
-  const acceptDonation = async (donationId) => {
-    try {
-      setLoading(true);
-      
-      // Validate volunteer ID
-      if (!uid) {
-        console.error("No volunteer ID found");
-        setError("You must be logged in as a volunteer to accept donations");
-        return;
-      }
-      
-      console.log("Accepting donation:", donationId);
-      console.log("Volunteer ID:", uid);
-      console.log("User role:", role);
-      
-      const response = await fetch(`http://localhost:5000/api/donations/${donationId}/accept`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ volunteerId: uid }),
-      });
-      
-      console.log("Response status:", response.status);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error response:", errorData);
-        throw new Error(errorData.message || "Failed to accept donation");
-      }
-      
-      const result = await response.json();
-      console.log("Accept donation result:", result);
-      
-      // Show success message
-      setError("");
-      alert("Donation accepted successfully! Check your assigned tasks.");
-      
-      // Refresh both lists
-      await Promise.all([fetchAvailableDonations(), fetchAssignedDonations()]);
-    } catch (err) {
-      console.error("Accept donation error:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update delivery status
-  const updateDeliveryStatus = async (donationId, status) => {
-    try {
-      setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/donations/${donationId}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ volunteerId: uid, status }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update status");
-      }
-      
-      // Refresh assigned donations
-      await fetchAssignedDonations();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Fetch available tasks
-  const fetchAvailableTasks = async () => {
+  const fetchAvailableTasks = useCallback(async () => {
     try {
       setTaskLoading(true);
       const tasks = await getAvailableTasks();
+      console.log('Volunteer: fetched available tasks:', tasks);
       setAvailableTasks(tasks);
       setTaskError("");
     } catch (err) {
@@ -223,10 +117,10 @@ const VolunteerDashboard = () => {
     } finally {
       setTaskLoading(false);
     }
-  };
+  }, []);
 
   // Fetch volunteer's assigned tasks
-  const fetchAssignedTasks = async () => {
+  const fetchAssignedTasks = useCallback(async () => {
     try {
       setTaskLoading(true);
       const tasks = await getVolunteerTasks(uid);
@@ -238,7 +132,7 @@ const VolunteerDashboard = () => {
     } finally {
       setTaskLoading(false);
     }
-  };
+  }, [uid]);
 
   // Accept a task
   const acceptTaskHandler = async (taskId) => {
@@ -295,16 +189,12 @@ const VolunteerDashboard = () => {
     // Fetch users data for map
     fetchUsers();
 
-    if (activeTab === "availableDonations") {
-      fetchAvailableDonations();
-    } else if (activeTab === "assignedTasks") {
-      fetchAssignedDonations();
-    } else if (activeTab === "availableTasks") {
+    if (activeTab === "availableTasks") {
       fetchAvailableTasks();
     } else if (activeTab === "myTasks") {
       fetchAssignedTasks();
     }
-  }, [isVolunteer, navigate, activeTab]);
+  }, [isVolunteer, navigate, activeTab, fetchAvailableTasks, fetchAssignedTasks]);
 
   // Format date
   const formatDate = (dateString) => {
@@ -318,10 +208,16 @@ const VolunteerDashboard = () => {
         return <span className="status-badge pending">Pending</span>;
       case "assigned":
         return <span className="status-badge assigned">Assigned</span>;
+      case "accepted":
+        return <span className="status-badge accepted">Accepted</span>;
       case "picked_up":
         return <span className="status-badge picked-up">Picked Up</span>;
-      case "completed":
+      case "in_transit":
+        return <span className="status-badge in-transit">In Transit</span>;
+      case "delivered":
         return <span className="status-badge completed">Delivered</span>;
+      case "completed":
+        return <span className="status-badge completed">Completed</span>;
       default:
         return <span className="status-badge">{status}</span>;
     }
@@ -347,15 +243,6 @@ const VolunteerDashboard = () => {
 
         <nav className="sidebar-nav">
           <ul>
-            <li>
-              <button
-                className={`nav-btn ${activeTab === "availableDonations" ? "active" : ""}`}
-                onClick={() => setActiveTab("availableDonations")}
-              >
-                <FaBoxOpen />
-                {!isCollapsed && <span>Available Donations</span>}
-              </button>
-            </li>
             <li>
               <button
                 className={`nav-btn ${activeTab === "availableTasks" ? "active" : ""}`}
@@ -418,12 +305,12 @@ const VolunteerDashboard = () => {
           <h1>Volunteer Dashboard</h1>
           <div className="header-stats">
             <div className="stat-card">
-              <div className="stat-number">{availableDonations.length}</div>
-              <div className="stat-label">Available</div>
+              <div className="stat-number">{availableTasks.length}</div>
+              <div className="stat-label">Available Tasks</div>
             </div>
             <div className="stat-card">
-              <div className="stat-number">{assignedDonations.length}</div>
-              <div className="stat-label">Assigned</div>
+              <div className="stat-number">{assignedTasks.filter(t => t.status !== 'delivered').length}</div>
+              <div className="stat-label">Active Tasks</div>
             </div>
           </div>
         </header>
@@ -436,64 +323,6 @@ const VolunteerDashboard = () => {
         )}
 
         <div className="content-area">
-          {activeTab === "availableDonations" && (
-            <div className="donations-section">
-              <h2>Available Donations</h2>
-              {loading ? (
-                <div className="loading">Loading...</div>
-              ) : availableDonations.length === 0 ? (
-                <div className="empty-state">
-                  <FaBoxOpen className="empty-icon" />
-                  <p>No available donations at the moment.</p>
-                </div>
-              ) : (
-                <div className="donations-grid">
-                  {availableDonations.map((donation) => (
-                    <div key={donation._id} className="donation-card">
-                      <div className="card-header">
-                        <h3>{donation.food}</h3>
-                        {getStatusBadge(donation.status)}
-                      </div>
-                      <div className="card-body">
-                        <div className="detail-item">
-                          <FaBoxOpen className="detail-icon" />
-                          <span>Quantity: {donation.quantity}</span>
-                        </div>
-                        <div className="detail-item">
-                          <FaMapMarkedAlt className="detail-icon" />
-                          <span>Location: {donation.location}</span>
-                        </div>
-                        <div className="detail-item">
-                          <FaUser className="detail-icon" />
-                          <span>Donor: {donation.donor?.name || "Anonymous"}</span>
-                        </div>
-                        <div className="detail-item">
-                          <FaClock className="detail-icon" />
-                          <span>Posted: {formatDate(donation.createdAt)}</span>
-                        </div>
-                        {donation.notes && (
-                          <div className="detail-item">
-                            <FaInfoCircle className="detail-icon" />
-                            <span>Notes: {donation.notes}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="card-footer">
-                        <button
-                          className="accept-btn"
-                          onClick={() => acceptDonation(donation._id)}
-                          disabled={loading}
-                        >
-                          Accept Task
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
           {activeTab === "availableTasks" && (
             <div className="tasks-section">
               <h2>Available Tasks</h2>
@@ -619,26 +448,14 @@ const VolunteerDashboard = () => {
                             onClick={() => updateTaskStatusHandler(task._id, "picked_up")}
                             disabled={taskLoading}
                           >
-                            Picked Up
+                            Pickup
                           </button>
                         )}
-                        {task.status === "picked_up" && (
-                          <button
-                            className="status-btn transit-btn"
-                            onClick={() => updateTaskStatusHandler(task._id, "in_transit")}
-                            disabled={taskLoading}
-                          >
-                            In Transit
-                          </button>
-                        )}
-                        {task.status === "in_transit" && (
-                          <button
-                            className="status-btn delivered-btn"
-                            onClick={() => updateTaskStatusHandler(task._id, "delivered")}
-                            disabled={taskLoading}
-                          >
-                            Mark as Delivered
-                          </button>
+                        {(task.status === "picked_up" || task.status === "in_transit") && (
+                          <div className="completion-badge" style={{ background: '#fef3c7', color: '#92400e', padding: '8px 12px', borderRadius: '6px', fontSize: '14px' }}>
+                            <FaClock />
+                            Picked up — waiting for receiver confirmation
+                          </div>
                         )}
                         {task.status === "delivered" && (
                           <div className="completion-badge">
@@ -659,7 +476,17 @@ const VolunteerDashboard = () => {
               <h2>Donation Locations Map</h2>
               <div className="map-container">
                 <VolunteerMap 
-                  donations={availableDonations}
+                  donations={assignedTasks.map(t => ({
+                    _id: t._id,
+                    food: t.donation?.food || 'Task',
+                    quantity: t.donation?.quantity || '',
+                    location: t.pickupAddress,
+                    latitude: t.pickupCoordinates?.latitude || null,
+                    longitude: t.pickupCoordinates?.longitude || null,
+                    status: t.status,
+                    createdAt: t.createdAt,
+                    donor: t.donor?.name ? { name: t.donor.name } : null,
+                  }))}
                   users={users}
                   onLocationUpdate={handleLocationUpdate}
                 />
@@ -678,8 +505,8 @@ const VolunteerDashboard = () => {
                   <h3>📊 Location Stats</h3>
                   <div className="location-stats">
                     <div className="stat-item">
-                      <span className="stat-number">{availableDonations.filter(d => d.latitude && d.longitude).length}</span>
-                      <span className="stat-label">Donations with Location</span>
+                      <span className="stat-number">{assignedTasks.filter(t => t.pickupCoordinates?.latitude && t.pickupCoordinates?.longitude).length}</span>
+                      <span className="stat-label">Tasks with Location</span>
                     </div>
                     <div className="stat-item">
                       <span className="stat-number">{users.filter(u => u.role === 'receiver' && u.latitude && u.longitude).length}</span>
@@ -727,11 +554,11 @@ const VolunteerDashboard = () => {
                 </div>
                 <div className="profile-stats">
                   <div className="profile-stat">
-                    <div className="stat-number">{assignedDonations.filter(d => d.status === "completed").length}</div>
+                    <div className="stat-number">{assignedTasks.filter(t => t.status === "delivered").length}</div>
                     <div className="stat-label">Completed Deliveries</div>
                   </div>
                   <div className="profile-stat">
-                    <div className="stat-number">{assignedDonations.filter(d => d.status !== "completed").length}</div>
+                    <div className="stat-number">{assignedTasks.filter(t => t.status !== "delivered").length}</div>
                     <div className="stat-label">Active Tasks</div>
                   </div>
                 </div>

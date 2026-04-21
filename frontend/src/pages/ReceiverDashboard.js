@@ -13,7 +13,7 @@ import {
   FaMapMarkedAlt
 } from 'react-icons/fa';
 import './ReceiverDashboard.css';
-import { getAvailableDonations, acceptDonation as acceptDonationApi, markReceived as markReceivedApi } from '../services/donationApi';
+import { getAvailableDonations, acceptDonation as acceptDonationApi, markReceived as markReceivedApi, getReceiverDonations } from '../services/donationApi';
 import MapSection from '../components/MapSection';
 import MapDistanceModal from '../components/MapDistanceModal';
 import { getUser, uploadAvatar, uploadProfilePicture } from '../services/usersApi';
@@ -93,6 +93,8 @@ const ReceiverDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [acceptedDonations, setAcceptedDonations] = useState([]); // {id, at: Date}
+  const [myDonations, setMyDonations] = useState([]);
+  const [loadingMy, setLoadingMy] = useState(false);
 
   // Browse: filters and data
   const [search, setSearch] = useState('');
@@ -241,15 +243,35 @@ const ReceiverDashboard = () => {
       await markReceivedApi(donationId, receiverId);
       // Mark as received locally (keep in Connections)
       setAcceptedDonations((prev) => prev.map((a) => a.id === donationId ? { ...a, receivedAt: new Date() } : a));
-      // Refresh available list (in case statuses changed)
-      const data = await getAvailableDonations();
-      setAvailable(Array.isArray(data) ? data : []);
+      // Refresh my donations to reflect status change
+      await fetchMyDonations();
       alert('Marked as received. Donor will be notified.');
     } catch (e) {
       console.error(e);
       alert('Failed to mark as received');
     }
   };
+
+  const fetchMyDonations = async () => {
+    const receiverId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    if (!receiverId) return;
+    try {
+      setLoadingMy(true);
+      const data = await getReceiverDonations(receiverId);
+      setMyDonations(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingMy(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'connections' || activeTab === 'dashboard') {
+      fetchMyDonations();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const acceptDonation = async (donation) => {
     try {
@@ -259,19 +281,23 @@ const ReceiverDashboard = () => {
         return;
       }
       const receiverLocation = (storedLocation && storedLocation.trim()) || (prefs.location && prefs.location.trim()) || '';
-      await acceptDonationApi(donation.id, receiverId, receiverLocation || undefined);
+      console.log('Accepting donation:', donation.id, 'receiverId:', receiverId, 'receiverLocation:', receiverLocation);
+      const result = await acceptDonationApi(donation.id, receiverId, receiverLocation || undefined);
+      console.log('Accept donation result:', result);
       // Update local accepted list
       setAcceptedDonations((prev) => {
         if (prev.some((a) => a.id === donation.id)) return prev;
         return [...prev, { id: donation.id, at: new Date(), meta: donation }];
       });
       alert('Accepted. Donor notified.');
-      // Refresh available list
+      // Refresh available list and my donations
       const data = await getAvailableDonations();
+      console.log('Refreshed available donations:', data);
       setAvailable(Array.isArray(data) ? data : []);
+      await fetchMyDonations();
     } catch (e) {
-      console.error(e);
-      alert('Failed to accept donation');
+      console.error('Accept donation error:', e);
+      alert('Failed to accept donation: ' + (e.response?.data?.message || e.message));
     }
   };
 
@@ -374,9 +400,9 @@ const ReceiverDashboard = () => {
                 <p style={{ color: '#6b7280' }}>Matching your current filters</p>
               </div>
               <div className="card" style={{ padding: 16 }}>
-                <h3 style={{ marginTop: 0 }}>Accepted</h3>
-                <p style={{ fontSize: 24, fontWeight: 700 }}>{acceptedDonations.length}</p>
-                <p style={{ color: '#6b7280' }}>Awaiting pickup</p>
+                <h3 style={{ marginTop: 0 }}>My Donations</h3>
+                <p style={{ fontSize: 24, fontWeight: 700 }}>{myDonations.length}</p>
+                <p style={{ color: '#6b7280' }}>Accepted donations</p>
               </div>
               <div className="card" style={{ padding: 16 }}>
                 <h3 style={{ marginTop: 0 }}>Today</h3>
@@ -539,15 +565,11 @@ const ReceiverDashboard = () => {
                         donor: d.donor,
                         createdAt: d.createdAt,
                       })}
-                      disabled={hasAccepted(d._id)}
+                      disabled={hasAccepted(d._id) || myDonations.some(m => m._id === d._id)}
                     >
-                      {hasAccepted(d._id) ? 'Accepted' : 'Accept'}
+                      {hasAccepted(d._id) || myDonations.some(m => m._id === d._id) ? 'Accepted' : 'Accept'}
                     </button>
-                    {hasAccepted(d._id) ? (
-                      <button className="btn" onClick={() => markAsReceived(d._id)}>Mark Received</button>
-                    ) : (
-                      <button className="btn details">Details</button>
-                    )}
+                    <button className="btn details">Details</button>
                   </div>
                 </div>
               ))}
@@ -669,33 +691,44 @@ const ReceiverDashboard = () => {
       case 'connections':
         return (
           <div className="dashboard-content">
-            <h2>Connections</h2>
-            <div className="card-grid">
-              {acceptedDonations.map((a) => {
-                const m = a.meta || {};
-                const donor = m.donor || {};
-                return (
-                  <div key={a.id} className="card">
-                    <h4 style={{ marginTop: 0 }}>{donor.name || 'Donor'}</h4>
-                    <p style={{ marginTop: 4, color: '#6b7280' }}>Donor</p>
-                    {donor.email && <p>Email: {donor.email}</p>}
-                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e5e7eb' }}>
-                      <div><strong>Food:</strong> {m.food || m.foodName || m.item || 'N/A'}</div>
-                      {(m.quantity || m.qty) && <div><strong>Quantity:</strong> {m.quantity || m.qty}</div>}
-                      {(m.location || m.pickup) && <div><strong>Pickup:</strong> {m.location || m.pickup}</div>}
-                      {a.receivedAt ? (
-                        <div><strong>Received at:</strong> {new Date(a.receivedAt).toLocaleString()}</div>
-                      ) : (
-                        <div><strong>Accepted at:</strong> {new Date(a.at).toLocaleString()}</div>
-                      )}
+            <h2>My Donations</h2>
+            {loadingMy && <div className="empty-state">Loading...</div>}
+            {!loadingMy && (
+              <div className="card-grid">
+                {myDonations.map((d) => {
+                  const donor = d.donor || {};
+                  const canReceive = d.status === 'picked_up' || d.taskStatus === 'picked_up';
+                  const isCompleted = d.status === 'completed';
+                  return (
+                    <div key={d._id} className="card">
+                      <h4 style={{ marginTop: 0 }}>{d.food || 'Donation'}</h4>
+                      <p style={{ marginTop: 4, color: '#6b7280' }}>{donor.name || 'Donor'} {donor.email && `• ${donor.email}`}</p>
+                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e5e7eb' }}>
+                        <div><strong>Food:</strong> {d.food || 'N/A'}</div>
+                        {d.quantity && <div><strong>Quantity:</strong> {d.quantity}</div>}
+                        {d.location && <div><strong>Pickup:</strong> {d.location}</div>}
+                        <div><strong>Status:</strong> {isCompleted ? 'Completed' : d.status}</div>
+                        {d.volunteer && <div><strong>Volunteer:</strong> {d.volunteer.name || 'Assigned'}</div>}
+                        <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          {canReceive && !isCompleted && (
+                            <button className="btn accept" onClick={() => markAsReceived(d._id)}>Mark Received</button>
+                          )}
+                          {isCompleted && (
+                            <span style={{ color: '#16a34a', fontWeight: 600 }}>Received</span>
+                          )}
+                          {!canReceive && !isCompleted && (
+                            <span style={{ color: '#6b7280', fontSize: 13 }}>Waiting for volunteer pickup...</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-              {acceptedDonations.length === 0 && (
-                <div className="card"><p>No connections yet. Accept a donation to see it here. Marking as received will keep the connection for your records.</p></div>
-              )}
-            </div>
+                  );
+                })}
+                {myDonations.length === 0 && (
+                  <div className="card"><p>No donations yet. Accept a donation from Browse to see it here.</p></div>
+                )}
+              </div>
+            )}
           </div>
         );
       case 'map':

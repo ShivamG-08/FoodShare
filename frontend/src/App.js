@@ -10,6 +10,7 @@ import VolunteerDashboard from "./pages/VolunteerDashboard";
 import WaitingForApproval from "./pages/WaitingForApproval";
 import ResetPassword from "./pages/ResetPassword";
 import StoryDetails from './pages/StoryDetails';
+import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
 /* ---------------- Hero ---------------- */
@@ -415,31 +416,25 @@ function App() {
         <Route
           path="/admin"
           element={
-            typeof window !== "undefined" && localStorage.getItem("userRole") === "admin" ? (
+            <ProtectedRoute allowedRole="admin">
               <AdminDashboard />
-            ) : (
-              <Navigate to="/admin-login" replace />
-            )
+            </ProtectedRoute>
           }
         />
         <Route
           path="/donor"
           element={
-            typeof window !== "undefined" && localStorage.getItem("userRole") === "donor" ? (
+            <ProtectedRoute allowedRole="donor">
               <DonorDashboard />
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            </ProtectedRoute>
           }
         />
         <Route
           path="/receiver"
           element={
-            typeof window !== "undefined" && localStorage.getItem("userRole") === "receiver" ? (
+            <ProtectedRoute allowedRole="receiver">
               <ReceiverDashboard />
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            </ProtectedRoute>
           }
         />
         <Route path="/donor-dashboard" element={<DonorDashboard />} />
@@ -447,11 +442,9 @@ function App() {
         <Route
           path="/volunteer"
           element={
-            typeof window !== "undefined" && localStorage.getItem("userRole") === "volunteer" ? (
+            <ProtectedRoute allowedRole="volunteer">
               <VolunteerDashboard />
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            </ProtectedRoute>
           }
         />
         <Route path="*" element={<Navigate to="/" />} />
