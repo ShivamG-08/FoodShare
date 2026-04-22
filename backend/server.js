@@ -99,6 +99,10 @@ const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 const io = initializeSocket(server);
 
+// Initialize location tracking handlers
+const { handleLocationTracking } = require('./services/socketService');
+handleLocationTracking(io);
+
 server.listen(PORT, async () => {
   console.log(` Server running on http://localhost:${PORT}`);
   console.log(` Socket.IO enabled for real-time communication`);

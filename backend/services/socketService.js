@@ -139,6 +139,125 @@ const notificationTemplates = {
   })
 };
 
+// Handle location tracking events
+const handleLocationTracking = (io) => {
+  io.on('connection', (socket) => {
+    console.log('Socket connected for location tracking:', socket.id);
+
+    // User connects with location tracking
+    socket.on('user-connect', (data) => {
+      const { userId, role, timestamp } = data;
+      socket.userId = userId;
+      socket.userRole = role;
+      
+      // Join user-specific room
+      socket.join(`user-${userId}`);
+      
+      // Join role-specific room if volunteer
+      if (role === 'volunteer') {
+        socket.join('volunteers');
+      }
+      
+      console.log(`User ${userId} (${role}) connected for location tracking`);
+      
+      // Broadcast user online status
+      socket.broadcast.emit('user-status', {
+        userId,
+        status: 'online',
+        timestamp
+      });
+    });
+
+    // Location update from volunteer
+    socket.on('location-update', (data) => {
+      const { taskId, volunteerId, latitude, longitude, accuracy, timestamp, speed, heading } = data;
+      
+      console.log(`Location update for task ${taskId} from volunteer ${volunteerId}:`, { latitude, longitude });
+      
+      // Broadcast to task-specific room
+      socket.to(`task-${taskId}`).emit('location-update', {
+        taskId,
+        volunteerId,
+        latitude,
+        longitude,
+        accuracy,
+        timestamp,
+        speed,
+        heading
+      });
+      
+      // Also broadcast to donor and receiver
+      const Task = require('../models/Task');
+      Task.findById(taskId).populate('donor receiver').then(task => {
+        if (task) {
+          socket.to(`user-${task.donor}`).emit('location-update', {
+            taskId,
+            volunteerId,
+            latitude,
+            longitude,
+            accuracy,
+            timestamp,
+            speed,
+            heading
+          });
+          
+          socket.to(`user-${task.receiver}`).emit('location-update', {
+            taskId,
+            volunteerId,
+            latitude,
+            longitude,
+            accuracy,
+            timestamp,
+            speed,
+            heading
+          });
+        }
+      });
+    });
+
+    // Join task location room
+    socket.on('join-task-location', (data) => {
+      const { taskId } = data;
+      socket.join(`task-${taskId}`);
+      console.log(`User ${socket.userId} joined location room for task ${taskId}`);
+    });
+
+    // Leave task location room
+    socket.on('leave-task-location', (data) => {
+      const { taskId } = data;
+      socket.leave(`task-${taskId}`);
+      console.log(`User ${socket.userId} left location room for task ${taskId}`);
+    });
+
+    // Volunteer status updates
+    socket.on('volunteer-status', (data) => {
+      const { taskId, status, volunteerId } = data;
+      
+      // Broadcast to task room
+      socket.to(`task-${taskId}`).emit('volunteer-status', {
+        taskId,
+        volunteerId,
+        status,
+        timestamp: new Date()
+      });
+    });
+
+    // Handle disconnection
+    socket.on('disconnect', () => {
+      console.log(`User ${socket.userId} disconnected from location tracking`);
+      
+      // Broadcast user offline status
+      if (socket.userId) {
+        socket.broadcast.emit('user-status', {
+          userId: socket.userId,
+          status: 'offline',
+          timestamp: new Date()
+        });
+      }
+    });
+  });
+};
+
 module.exports = {
   initializeSocket,
   getIO,
@@ -146,5 +265,6 @@ module.exports = {
   broadcastNotification,
   sendTaskNotification,
   sendTaskStatusUpdate,
+  handleLocationTracking,
   notificationTemplates
 };

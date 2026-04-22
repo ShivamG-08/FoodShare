@@ -191,6 +191,24 @@ router.post('/:taskId/accept', async (req, res) => {
     task.acceptedAt = new Date();
     await task.save();
 
+    // Send Socket.IO task-accepted event for real-time updates
+    const { getIO } = require('../services/socketService');
+    const io = getIO();
+    
+    if (io) {
+      // Emit task-accepted event to receiver
+      io.to(`user-${task.receiver}`).emit('task-accepted', {
+        taskId: task._id,
+        receiverId: task.receiver,
+        volunteerId: volunteerId,
+        volunteerName: volunteer.name,
+        status: 'accepted',
+        timestamp: new Date()
+      });
+      
+      console.log('Emitted task-accepted event to receiver:', task.receiver);
+    }
+
     // Send notifications
     await sendTaskStatusUpdate(taskId, 'accepted', [task.donor, task.receiver, volunteerId]);
 
@@ -371,6 +389,49 @@ router.get('/stats', async (req, res) => {
   } catch (error) {
     console.error('Get task stats error:', error);
     res.status(500).json({ message: 'Error fetching task statistics' });
+  }
+});
+
+// Get receiver's tasks (for Connections section)
+router.get('/receiver/:receiverId', async (req, res) => {
+  try {
+    const { receiverId } = req.params;
+    
+    if (!receiverId) {
+      return res.status(400).json({ message: 'Receiver ID is required' });
+    }
+
+    console.log('Fetching tasks for receiver:', receiverId);
+
+    // Fetch all tasks where receiverId matches
+    const tasks = await Task.find({ receiver: receiverId })
+      .populate('donor', 'name email profileImageUrl phone')
+      .populate('volunteer', 'name email profileImageUrl phone')
+      .populate('donation', 'food quantity location')
+      .sort({ createdAt: -1 });
+
+    console.log('Found tasks:', tasks.length);
+
+    // Filter tasks that should be shown in connections (exclude pending)
+    const connectionTasks = tasks.filter(task => 
+      ['accepted', 'picked_up', 'in_transit', 'delivered'].includes(task.status)
+    );
+
+    console.log('Connection tasks (non-pending):', connectionTasks.length);
+
+    // Return structured response
+    res.json({
+      success: true,
+      tasks: connectionTasks,
+      count: connectionTasks.length
+    });
+  } catch (error) {
+    console.error('Get receiver tasks error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching receiver tasks',
+      error: error.message
+    });
   }
 });
 

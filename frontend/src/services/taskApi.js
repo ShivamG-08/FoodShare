@@ -51,11 +51,23 @@ export async function getTaskStats() {
   return data;
 }
 
+export async function confirmFoodReceived(taskId, receiverId, rating, feedback) {
+  const { data } = await axios.patch(`${BASE_URL}/api/donations/${taskId}/receive-food`, {
+    receiverId,
+    rating,
+    feedback
+  }, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return data;
+}
+
 export default { 
   createTask, 
   getAvailableTasks, 
   acceptTask, 
   updateTaskStatus, 
   getVolunteerTasks, 
-  getTaskStats 
+  getTaskStats,
+  confirmFoodReceived
 };
