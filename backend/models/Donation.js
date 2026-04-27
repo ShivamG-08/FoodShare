@@ -6,6 +6,8 @@ const DonationSchema = new mongoose.Schema(
     food: { type: String, required: true },
     quantity: { type: String, required: true },
     location: { type: String, required: true },
+    latitude: { type: Number, default: null },
+    longitude: { type: Number, default: null },
     notes: { type: String },
     status: { type: String, enum: ["pending", "assigned", "picked_up", "completed"], default: "pending" },
     assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },

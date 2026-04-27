@@ -9,6 +9,7 @@ import {
   FaCog,
   FaBell,
   FaSearch,
+  FaEye
 } from "react-icons/fa";
 import "./AdminDashboard.css";
 
@@ -34,6 +35,7 @@ export default function AdminDashboard() {
   // Local users state so admin actions (add donor/receiver) reflect in tables
   const [users, setUsers] = useState([]);
   const [donations, setDonations] = useState([]);
+  const [pendingUsers, setPendingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -60,6 +62,64 @@ export default function AdminDashboard() {
     alert("Settings saved");
   };
 
+  // Fetch pending users for admin verification
+  const fetchPendingUsers = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/users/admin/new-users");
+      setPendingUsers(response.data || []);
+    } catch (error) {
+      console.error("Error fetching pending users:", error);
+    }
+  };
+
+  // Approve user
+  const approveUser = async (userId) => {
+    try {
+      await axios.put(`http://localhost:5000/api/users/admin/approve/${userId}`);
+      // Refresh pending users and all users
+      await fetchPendingUsers();
+      // Refresh all users list
+      const usersRes = await axios.get("http://localhost:5000/api/users");
+      const userList = Array.isArray(usersRes.data?.users) ? usersRes.data.users : [];
+      const mappedUsers = userList.map((u) => ({
+        id: u._id || u.id,
+        customId: u.customId || `ID-${u._id.toString().substring(0, 4)}`,
+        name: u.name,
+        role: u.role,
+        email: u.email,
+        status: u.status || "active",
+      }));
+      setUsers(mappedUsers);
+    } catch (error) {
+      console.error("Error approving user:", error);
+      alert("Error approving user");
+    }
+  };
+
+  // Reject user
+  const rejectUser = async (userId) => {
+    try {
+      await axios.put(`http://localhost:5000/api/users/admin/reject/${userId}`);
+      // Refresh pending users and all users
+      await fetchPendingUsers();
+      // Refresh all users list
+      const usersRes = await axios.get("http://localhost:5000/api/users");
+      const userList = Array.isArray(usersRes.data?.users) ? usersRes.data.users : [];
+      const mappedUsers = userList.map((u) => ({
+        id: u._id || u.id,
+        customId: u.customId || `ID-${u._id.toString().substring(0, 4)}`,
+        name: u.name,
+        role: u.role,
+        email: u.email,
+        status: u.status || "active",
+      }));
+      setUsers(mappedUsers);
+    } catch (error) {
+      console.error("Error rejecting user:", error);
+      alert("Error rejecting user");
+    }
+  };
+
   useEffect(() => {
     let active = true;
     setLoading(true);
@@ -68,6 +128,8 @@ export default function AdminDashboard() {
     const fetchUsers = axios.get("http://localhost:5000/api/users");
     // Fetch donations
     const fetchDonations = getAllDonations();
+    // Fetch pending users
+    fetchPendingUsers();
 
     Promise.all([fetchUsers, fetchDonations])
       .then(([usersRes, donationsData]) => {
@@ -77,6 +139,7 @@ export default function AdminDashboard() {
         const userList = Array.isArray(usersRes.data?.users) ? usersRes.data.users : [];
         const mappedUsers = userList.map((u) => ({
           id: u._id || u.id,
+          customId: u.customId || `ID-${u._id.toString().substring(0, 4)}`,
           name: u.name,
           role: u.role,
           email: u.email,
@@ -171,6 +234,9 @@ export default function AdminDashboard() {
           <button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>
             <FaTachometerAlt /> <span>Overview</span>
           </button>
+          <button className={tab === "new-users" ? "active" : ""} onClick={() => setTab("new-users")}>
+            <FaUsers /> <span>New Users</span>
+          </button>
           <button className={tab === "users" ? "active" : ""} onClick={() => setTab("users")}>
             <FaUsers /> <span>Users</span>
           </button>
@@ -236,7 +302,7 @@ export default function AdminDashboard() {
               <h3>Recent Donations</h3>
               <table className="ad-table">
                 <thead>
-                  <tr><th>ID</th><th>Title</th><th>Donor</th><th>Qty</th><th>Status</th></tr>
+                  <tr><th>Food Name</th><th>Donor Name</th><th>Quantity</th><th>Status</th><th>Assigned To</th></tr>
                 </thead>
                 <tbody>
                   {loading ? (
@@ -270,6 +336,78 @@ export default function AdminDashboard() {
           </section>
         )}
 
+        {tab === "new-users" && (
+          <section className="ad-panel">
+            <div className="panel-head">
+              <h3>New Users (Pending Approval)</h3>
+              <div className="panel-actions">
+                <span className="pending-count">{pendingUsers.length} pending users</span>
+              </div>
+            </div>
+            <table className="ad-table">
+              <thead>
+                <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Documents</th><th>Applied Date</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                {pendingUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="text-center py-4">No pending users</td>
+                  </tr>
+                ) : (
+                  pendingUsers.map(user => (
+                    <tr key={user._id}>
+                      <td>{user.customId || `ID-${user._id.toString().substring(0, 4)}`}</td>
+                      <td>{user.name}</td>
+                      <td>{user.email}</td>
+                      <td>
+                        <span className={`role-badge ${user.role}`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td>
+                        {user.documents && user.documents.length > 0 ? (
+                          <div className="documents-list">
+                            {user.documents.map((doc, index) => (
+                              <a 
+                                key={index} 
+                                href={`http://localhost:5000/uploads/avatars/${doc.filename}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="document-link"
+                                title={`View ${doc.filename || doc.documentType}`}
+                              >
+                                <FaEye className="document-icon" />
+                                {doc.filename || doc.documentType}
+                              </a>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="no-documents">No documents uploaded</span>
+                        )}
+                      </td>
+                      <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                      <td className="row-actions">
+                        <button 
+                          className="btn sm success" 
+                          onClick={() => approveUser(user._id)}
+                        >
+                          Approve
+                        </button>
+                        <button 
+                          className="btn sm danger" 
+                          onClick={() => rejectUser(user._id)}
+                        >
+                          Reject
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </section>
+        )}
+
         {tab === "users" && (
           <section className="ad-panel">
             <div className="panel-head">
@@ -285,18 +423,18 @@ export default function AdminDashboard() {
               <tbody>
                 {filteredUsers.map(u => (
                   <tr key={u.id}>
-                    <td>{u.id}</td>
+                    <td>{u.customId || `ID-${u.id.toString().substring(0, 4)}`}</td>
                     <td>{u.name}</td>
                     <td>{u.role}</td>
                     <td>{u.email}</td>
                     <td><span className={`status ${u.status}`}>{u.status}</span></td>
                     <td className="row-actions">
-                      <button className="btn sm">View</button>
-                      <button className="btn sm">Edit</button>
+                      {/* <button className="btn sm">View</button>
+                      <button className="btn sm">Edit</button> */}
                       <button className="btn sm danger">{u.status === 'blocked' ? 'Unblock' : 'Block'}</button>
                     </td>
                   </tr>
-                ))}
+                ))}..
               </tbody>
             </table>
           </section>
@@ -317,13 +455,13 @@ export default function AdminDashboard() {
               <tbody>
                 {filteredDonors.map(u => (
                   <tr key={u.id}>
-                    <td>{u.id}</td>
+                    <td>{u.customId || `ID-${u.id.toString().substring(0, 4)}`}</td>
                     <td>{u.name}</td>
                     <td>{u.email}</td>
                     <td><span className={`status ${u.status}`}>{u.status}</span></td>
                     <td className="row-actions">
-                      <button className="btn sm">View</button>
-                      <button className="btn sm">Edit</button>
+                      {/* <button className="btn sm">View</button>
+                      <button className="btn sm">Edit</button> */}
                       <button className="btn sm danger">{u.status === 'blocked' ? 'Unblock' : 'Block'}</button>
                     </td>
                   </tr>
@@ -348,13 +486,13 @@ export default function AdminDashboard() {
               <tbody>
                 {filteredReceivers.map(u => (
                   <tr key={u.id}>
-                    <td>{u.id}</td>
+                    <td>{u.customId || `ID-${u.id.toString().substring(0, 4)}`}</td>
                     <td>{u.name}</td>
                     <td>{u.email}</td>
                     <td><span className={`status ${u.status}`}>{u.status}</span></td>
                     <td className="row-actions">
-                      <button className="btn sm">View</button>
-                      <button className="btn sm">Edit</button>
+                      {/* <button className="btn sm">View</button>
+                      <button className="btn sm">Edit</button> */}
                       <button className="btn sm danger">{u.status === 'blocked' ? 'Unblock' : 'Block'}</button>
                     </td>
                   </tr>

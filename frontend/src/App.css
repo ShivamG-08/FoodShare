@@ -281,15 +281,80 @@ img { max-width: 100%; display: block; height: auto; }
 .contact-form button { width:auto; align-self:center; }
 
 /* Footer */
-.footer { background-color:#222; color:#aaa; padding:5rem 0 0; }
-.footer-content { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:3rem; max-width:1200px; margin:0 auto; padding:0 2rem 3rem; }
-.footer-section h3, .footer-section h4 { color:white; margin-bottom:1.5rem; }
-.footer-section h4::after { content:''; position:absolute; left:0; bottom:0; width:50px; height:2px; background-color:var(--primary-color); }
-.footer-section ul { list-style:none; padding:0; }
-.footer-section ul li { margin-bottom:0.8rem; }
-.footer-section ul li a { color:#aaa; transition:var(--transition); }
-.footer-section ul li a:hover { color:var(--primary-color); transform:translateX(5px); }
-.footer-bottom { text-align:center; padding:2rem 0; border-top:1px solid #444; font-size:0.9rem; }
+.footer { 
+  background-color:#222; 
+  color:#aaa; 
+  padding:2.5rem 0 0; 
+}
+
+.footer-content { 
+  display:grid; 
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); 
+  gap:1.5rem; 
+  max-width:1000px; 
+  margin:0 auto; 
+  padding:0 1.5rem 1.5rem; 
+}
+
+.footer-section h3, 
+.footer-section h4 { 
+  color:white; 
+  margin-bottom:0.8rem; 
+  font-size:1rem;
+}
+
+.footer-section h4 { 
+  position:relative; 
+  padding-bottom:0.5rem; 
+  font-size:0.95rem;
+}
+
+.footer-section h4::after { 
+  content:''; 
+  position:absolute; 
+  left:0; 
+  bottom:0; 
+  width:30px; 
+  height:2px; 
+  background-color:var(--primary-color); 
+}
+
+.footer-section ul { 
+  list-style:none; 
+  padding:0; 
+  margin:0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.2rem 1rem;
+}
+
+.footer-section ul li { 
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.footer-section ul li a { 
+  color:#aaa; 
+  transition:var(--transition); 
+  display: inline-block;
+  padding: 0.15rem 0;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.footer-section ul li a:hover { 
+  color:var(--primary-color); 
+  transform:translateX(3px); 
+}
+
+.footer-bottom { 
+  text-align:center; 
+  padding:1rem 0; 
+  border-top:1px solid #444; 
+  font-size:0.8rem;
+  margin-top: 0.5rem;
+}
 
 /* Responsive */
 @media (max-width:992px) {

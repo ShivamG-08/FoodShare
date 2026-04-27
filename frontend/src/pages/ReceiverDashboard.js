@@ -16,12 +16,13 @@ import './ReceiverDashboard.css';
 import { getAvailableDonations, acceptDonation as acceptDonationApi, markReceived as markReceivedApi } from '../services/donationApi';
 import MapSection from '../components/MapSection';
 import MapDistanceModal from '../components/MapDistanceModal';
-import { getUser, uploadAvatar } from '../services/usersApi';
+import { uploadProfilePicture } from '../services/usersApi';
+import { confirmFoodReceived } from '../services/taskApi';
+import { initializeLocationTracking, stopListeningToLocationUpdates } from '../services/locationService';
 
 const ReceiverDashboard = () => {
   const userName = (typeof window !== 'undefined' && localStorage.getItem('userName')) || (typeof window !== 'undefined' && localStorage.getItem('userEmail')) || 'Receiver';
   const userEmail = (typeof window !== 'undefined' && localStorage.getItem('userEmail')) || '';
-  const userRole = (typeof window !== 'undefined' && localStorage.getItem('userRole')) || 'receiver';
   const [profileImage, setProfileImage] = useState(() => {
     if (typeof window === 'undefined') return '';
     const role = localStorage.getItem('userRole') || 'receiver';
@@ -70,16 +71,19 @@ const ReceiverDashboard = () => {
     const uid = (typeof window !== 'undefined' && localStorage.getItem('userId')) || '';
     const role = (typeof window !== 'undefined' && localStorage.getItem('userRole')) || 'receiver';
     const key = uid ? `profileImage:${role}:${uid}` : 'profileImage:guest';
-    if (!file || !uid) return;
+    if (!file) return;
     try {
       setIsUploading(true);
-      const res = await uploadAvatar(uid, file);
+      const res = await uploadProfilePicture(file);
       const url = res?.profileImageUrl || '';
       if (url) {
         setProfileImage(url);
         try { localStorage.setItem(key, url); } catch (_) {}
+        alert('Profile picture uploaded successfully!');
       }
-    } catch (_) {
+    } catch (error) {
+      console.error('Profile picture upload error:', error);
+      alert('Failed to upload profile picture. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -90,12 +94,16 @@ const ReceiverDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [acceptedDonations, setAcceptedDonations] = useState([]); // {id, at: Date}
+  
+  // Connections and Tasks state
+  const [connections, setConnections] = useState([]); // Accepted donations with task details
+  const [completedConnections, setCompletedConnections] = useState([]); // Completed tasks
+  const [loadingConnections, setLoadingConnections] = useState(false);
+  const [errorConnections, setErrorConnections] = useState('');
+  const [socket, setSocket] = useState(null);
 
   // Browse: filters and data
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('all');
-  const [distance, setDistance] = useState('10');
-  const [sortBy, setSortBy] = useState('nearest');
 
   const [available, setAvailable] = useState([]); // from backend
   const [loadingAvail, setLoadingAvail] = useState(false);
@@ -112,7 +120,6 @@ const ReceiverDashboard = () => {
   const consentKey = receiverId ? `receiverLocationConsent:${receiverId}` : null;
   const askedKey = receiverId ? `receiverLocationAsked:${receiverId}` : null;
   const [storedLocation, setStoredLocation] = useState('');
-  const [hasConsent, setHasConsent] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [manualLocation, setManualLocation] = useState('');
   const [consentChecked, setConsentChecked] = useState(false);
@@ -342,6 +349,166 @@ const ReceiverDashboard = () => {
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
+
+  // Initialize Socket.IO and location tracking
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      const newSocket = initializeLocationTracking(userId, 'receiver');
+      setSocket(newSocket);
+
+      // Join user-specific room for targeted events
+      newSocket.emit('user-connect', {
+        userId,
+        role: 'receiver',
+        timestamp: new Date()
+      });
+
+      // Listen for task updates
+      newSocket.on('task-accepted', (data) => {
+        console.log('Task accepted event received:', data);
+        if (data.receiverId === userId || data.receiver === userId) {
+          console.log('Task accepted for current user, refreshing connections...');
+          
+          // Update connections to show volunteer details immediately
+          fetchConnections();
+          
+          // Show real-time notification
+          if (data.volunteerName) {
+            alert(`${data.volunteerName} has accepted your delivery task! Check Connections for details.`);
+          }
+        }
+      });
+
+      newSocket.on('task-updated', (data) => {
+        console.log('Task updated event received:', data);
+        if (data.receiverId === userId || data.receiver === userId) {
+          console.log('Task updated for current user, refreshing connections...');
+          
+          // Update connection status in real-time
+          fetchConnections();
+          
+          // Update specific task in state if available
+          setConnections(prev => prev.map(task => 
+            task._id === data.taskId 
+              ? { ...task, status: data.status, updatedAt: new Date() }
+              : task
+          ));
+        }
+      });
+
+      newSocket.on('task-completed', (data) => {
+        console.log('Task completed event received:', data);
+        if (data.receiverId === userId || data.receiver === userId) {
+          console.log('Task completed for current user, refreshing connections...');
+          
+          // Move to completed connections
+          fetchConnections();
+          
+          // Show completion notification
+          alert('Delivery completed! Thank you for confirming receipt.');
+        }
+      });
+
+      // Listen for volunteer location updates (if active task)
+      newSocket.on('location-update', (data) => {
+        console.log('Location update received:', data);
+        // Could be used to show real-time tracking in future
+      });
+
+      return () => {
+        stopListeningToLocationUpdates();
+        newSocket.disconnect();
+      };
+    }
+  }, []);
+
+  // Fetch receiver's connections (tasks with volunteer details)
+  const fetchConnections = async () => {
+    try {
+      setLoadingConnections(true);
+      setErrorConnections('');
+      
+      const userId = localStorage.getItem('userId');
+      const token = localStorage.getItem('token');
+      
+      console.log('Fetching connections for userId:', userId);
+      console.log('Token available:', !!token);
+      
+      if (!userId) {
+        console.error('No userId found in localStorage');
+        setErrorConnections('User ID not found. Please login again.');
+        return;
+      }
+      
+      const apiUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/tasks/receiver/${userId}`;
+      console.log('API URL:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`Failed to fetch connections: ${response.status} ${errorText}`);
+      }
+      
+      const responseData = await response.json();
+      console.log('Fetched response data:', responseData);
+      
+      // Handle structured response format
+      const tasks = responseData.tasks || responseData;
+      console.log('Tasks array:', tasks);
+      
+      // Separate active and completed connections
+      const active = tasks.filter(task => task.status !== 'completed');
+      const completed = tasks.filter(task => task.status === 'completed');
+      
+      console.log('Active connections:', active.length);
+      console.log('Completed connections:', completed.length);
+      
+      setConnections(active);
+      setCompletedConnections(completed);
+      
+    } catch (error) {
+      console.error('Fetch connections error:', error);
+      setErrorConnections(`Failed to fetch connections: ${error.message}`);
+    } finally {
+      setLoadingConnections(false);
+    }
+  };
+
+  // Handle Receive Food button click
+  const handleReceiveFood = async (taskId, donationId) => {
+    try {
+      const userId = localStorage.getItem('userId');
+      
+      await confirmFoodReceived(taskId, userId, null, 'Food received successfully');
+      
+      // Refresh connections to update status
+      await fetchConnections();
+      
+      alert('Food received successfully! Thank you for confirming.');
+      
+    } catch (error) {
+      console.error('Receive food error:', error);
+      alert('Failed to confirm food received. Please try again.');
+    }
+  };
+
+  // Fetch connections when connections tab is active
+  useEffect(() => {
+    if (activeTab === 'connections') {
+      fetchConnections();
+    }
+  }, [activeTab]);
 
   const menuItems = [
     { id: 'dashboard', icon: <FaHome />, label: 'Dashboard' },
@@ -667,34 +834,205 @@ const ReceiverDashboard = () => {
         return (
           <div className="dashboard-content">
             <h2>Connections</h2>
-            <div className="card-grid">
-              {acceptedDonations.map((a) => {
-                const m = a.meta || {};
-                const donor = m.donor || {};
-                return (
-                  <div key={a.id} className="card">
-                    <h4 style={{ marginTop: 0 }}>{donor.name || 'Donor'}</h4>
-                    <p style={{ marginTop: 4, color: '#6b7280' }}>Donor</p>
-                    {donor.email && <p>Email: {donor.email}</p>}
-                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #e5e7eb' }}>
-                      <div><strong>Food:</strong> {m.food || m.foodName || m.item || 'N/A'}</div>
-                      {(m.quantity || m.qty) && <div><strong>Quantity:</strong> {m.quantity || m.qty}</div>}
-                      {(m.location || m.pickup) && <div><strong>Pickup:</strong> {m.location || m.pickup}</div>}
-                      {a.receivedAt ? (
-                        <div><strong>Received at:</strong> {new Date(a.receivedAt).toLocaleString()}</div>
-                      ) : (
-                        <div><strong>Accepted at:</strong> {new Date(a.at).toLocaleString()}</div>
+            
+            {/* Active Connections Section */}
+            <div style={{ marginBottom: '2rem' }}>
+              <h3 style={{ marginBottom: '1rem', color: '#1f2937' }}>Active Connections</h3>
+              {loadingConnections ? (
+                <div className="card">Loading connections...</div>
+              ) : errorConnections ? (
+                <div className="card" style={{ color: '#dc2626' }}>{errorConnections}</div>
+              ) : connections.length === 0 ? (
+                <div className="card">
+                  <p>No active connections. Accept a donation to see it here.</p>
+                </div>
+              ) : (
+                <div className="connections-grid" style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+                  {connections.map((task) => (
+                    <div key={task._id} className="card connection-card" style={{ padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
+                      {/* Donor Details */}
+                      <div className="connection-section" style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #e5e7eb' }}>
+                        <h4 style={{ margin: '0 0 0.5rem 0', color: '#1f2937' }}>Donor Details</h4>
+                        <p style={{ margin: '0.25rem 0', color: '#6b7280' }}>
+                          <strong>Name:</strong> {task.donor?.name || 'Anonymous'}
+                        </p>
+                        <p style={{ margin: '0.25rem 0', color: '#6b7280' }}>
+                          <strong>Email:</strong> {task.donor?.email || 'N/A'}
+                        </p>
+                        <p style={{ margin: '0.25rem 0', color: '#6b7280' }}>
+                          <strong>Phone:</strong> {task.donor?.phone || 'N/A'}
+                        </p>
+                        {task.donor?.profileImageUrl && (
+                          <div style={{ marginTop: '0.5rem' }}>
+                            <img 
+                              src={task.donor.profileImageUrl} 
+                              alt="Donor" 
+                              style={{ 
+                                width: '50px', 
+                                height: '50px', 
+                                borderRadius: '50%', 
+                                objectFit: 'cover',
+                                border: '2px solid #e5e7eb'
+                              }} 
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Volunteer Details (only show if volunteer is assigned) */}
+                      {task.volunteer && (
+                        <div className="connection-section" style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #e5e7eb' }}>
+                          <h4 style={{ margin: '0 0 0.5rem 0', color: '#1f2937' }}>Volunteer Details</h4>
+                          <p style={{ margin: '0.25rem 0', color: '#6b7280' }}>
+                            <strong>Name:</strong> {task.volunteer?.name || 'N/A'}
+                          </p>
+                          <p style={{ margin: '0.25rem 0', color: '#6b7280' }}>
+                            <strong>Email:</strong> {task.volunteer?.email || 'N/A'}
+                          </p>
+                          <p style={{ margin: '0.25rem 0', color: '#6b7280' }}>
+                            <strong>Phone:</strong> {task.volunteer?.phone || 'N/A'}
+                          </p>
+                          {task.volunteer?.profileImageUrl && (
+                            <div style={{ marginTop: '0.5rem' }}>
+                              <img 
+                                src={task.volunteer.profileImageUrl} 
+                                alt="Volunteer" 
+                                className="volunteer-profile-img"
+                                style={{ 
+                                  width: '60px', 
+                                  height: '60px', 
+                                  borderRadius: '50%', 
+                                  objectFit: 'cover',
+                                  border: '2px solid #e5e7eb'
+                                }} 
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Food Details */}
+                      <div className="connection-section" style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #e5e7eb' }}>
+                        <h4 style={{ margin: '0 0 0.5rem 0', color: '#1f2937' }}>Food Details</h4>
+                        <p style={{ margin: '0.25rem 0', color: '#6b7280' }}>
+                          <strong>Item:</strong> {task.donation?.food || 'N/A'}
+                        </p>
+                        <p style={{ margin: '0.25rem 0', color: '#6b7280' }}>
+                          <strong>Quantity:</strong> {task.donation?.quantity || 'N/A'}
+                        </p>
+                        <p style={{ margin: '0.25rem 0', color: '#6b7280' }}>
+                          <strong>Pickup Location:</strong> {task.pickupAddress || task.donation?.location || 'N/A'}
+                        </p>
+                        <p style={{ margin: '0.25rem 0', color: '#6b7280' }}>
+                          <strong>Delivery Location:</strong> {task.deliveryAddress || 'Your location'}
+                        </p>
+                      </div>
+
+                      {/* Delivery Status */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <h4 style={{ margin: '0 0 0.5rem 0', color: '#1f2937' }}>Delivery Status</h4>
+                        <div 
+                          className={`status-badge status-${task.status}`}
+                          style={{ 
+                            padding: '0.5rem 1rem', 
+                            borderRadius: '4px', 
+                            textAlign: 'center',
+                            fontWeight: 'bold',
+                            backgroundColor: getStatusColor(task.status),
+                            color: '#fff'
+                          }}
+                        >
+                          {task.status?.replace('_', ' ').toUpperCase() || 'PENDING'}
+                        </div>
+                      </div>
+
+                      {/* Receive Food Button - Only show when task is delivered */}
+                      {task.status === 'delivered' && (
+                        <div style={{ textAlign: 'center' }}>
+                          <button
+                            className="receive-food-btn"
+                            onClick={() => handleReceiveFood(task._id, task.donation._id)}
+                            style={{ 
+                              padding: '0.75rem 2rem',
+                              fontSize: '1rem',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            Receive Food
+                          </button>
+                          <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
+                            Click to confirm you have received food items
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Show completion info if already completed */}
+                      {task.status === 'completed' && (
+                        <div style={{ textAlign: 'center', color: '#059669' }}>
+                          <p style={{ margin: '0.5rem 0', fontWeight: 'bold' }}>✅ Completed</p>
+                          <p style={{ margin: '0', fontSize: '0.875rem' }}>
+                            Food received on {new Date(task.completedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Show waiting for volunteer if no volunteer assigned */}
+                      {!task.assignedVolunteer && task.status === 'pending' && (
+                        <div style={{ textAlign: 'center', color: '#6b7280' }}>
+                          <p style={{ margin: '0.5rem 0', fontStyle: 'italic' }}>
+                            Waiting for volunteer assignment...
+                          </p>
+                        </div>
                       )}
                     </div>
-                  </div>
-                );
-              })}
-              {acceptedDonations.length === 0 && (
-                <div className="card"><p>No connections yet. Accept a donation to see it here. Marking as received will keep the connection for your records.</p></div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Completed Connections Section */}
+            <div>
+              <h3 style={{ marginBottom: '1rem', color: '#1f2937' }}>Completed Connections</h3>
+              {completedConnections.length === 0 ? (
+                <div className="card">
+                  <p>No completed connections yet.</p>
+                </div>
+              ) : (
+                <div className="connections-grid" style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+                  {completedConnections.map((task) => (
+                    <div key={task._id} className="card completed-connection" style={{ padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '8px', opacity: '0.8' }}>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: '#1f2937' }}>
+                        {task.donation?.food || 'Food Item'}
+                      </h4>
+                      <p style={{ margin: '0.25rem 0', color: '#6b7280' }}>
+                        <strong>From:</strong> {task.donor?.name || 'Anonymous'}
+                      </p>
+                      <p style={{ margin: '0.25rem 0', color: '#6b7280' }}>
+                        <strong>Delivered by:</strong> {task.volunteer?.name || 'Volunteer'}
+                      </p>
+                      <p style={{ margin: '0.25rem 0', color: '#059669' }}>
+                        <strong>Completed on:</strong> {new Date(task.completedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
         );
+
+  // Helper function to get status color
+  function getStatusColor(status) {
+    switch (status) {
+      case 'pending': return '#6b7280';
+      case 'accepted': return '#3b82f6';
+      case 'picked_up': return '#f59e0b';
+      case 'in_transit': return '#8b5cf6';
+      case 'delivered': return '#10b981';
+      case 'completed': return '#059669';
+      default: return '#6b7280';
+    }
+  }
       case 'map':
         return (
           <div className="dashboard-content">
